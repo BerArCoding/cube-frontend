@@ -1,0 +1,180 @@
+import React, { useState } from 'react';
+import { Mail, Lock } from 'lucide-react';
+import { Input, Button } from '../components/ui';
+import CubeLogo from '../components/ui/CubeLogo';
+import authAPI from '../services/auth';
+
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const handleInputChange = (field) => (e) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+    
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email) {
+      newErrors.email = 'E-mail é obrigatório';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'E-mail inválido';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Senha é obrigatória';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      console.log('Tentando fazer login com:', { email: formData.email });
+      
+      // Chamar a API real
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+
+      console.log('Login realizado com sucesso:', response);
+      
+      // Exibir sucesso
+      alert(`Login realizado com sucesso!\n\nUsuário: ${response.user.nome}\nEmail: ${response.user.email}\nTipo: ${response.user.tipo}`);
+      
+      // Aqui você pode redirecionar para o dashboard
+      // window.location.href = '/dashboard';
+      
+    } catch (error) {
+      console.error('Erro no login:', error);
+      
+      // Tratar diferentes tipos de erro
+      if (error.message.includes('fetch')) {
+        setErrors({ 
+          general: 'Erro de conexão. Verifique se o servidor está rodando.' 
+        });
+      } else if (error.message.includes('autenticação')) {
+        setErrors({ 
+          general: 'Email ou senha incorretos.' 
+        });
+      } else {
+        setErrors({ 
+          general: 'Erro ao fazer login. Tente novamente.' 
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 animate-fade-in">
+        {/* Header */}
+        <div className="text-center">
+          <div className="mx-auto h-20 w-20 gradient-bg rounded-xl flex items-center justify-center mb-6 shadow-lg p-3">
+            <CubeLogo 
+              className="h-20 w-auto" 
+              shadow={true}
+              shadowColor="rgba(0, 0, 0, 0.3)"
+              shadowBlur="4px"
+              shadowOffset="1px"
+            />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-700 mb-2">
+            Bem-vindo ao CUBE
+          </h2>
+          <p className="text-slate-500">
+            Transforme dados em decisões inteligentes!
+          </p>
+        </div>
+
+        {/* Formulário */}
+        <div className="card py-8 px-6 shadow-xl">
+          <div className="space-y-6">
+            {errors.general && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {errors.general}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Usuário ou E-mail"
+                value={formData.email}
+                onChange={handleInputChange('email')}
+                icon={Mail}
+                error={errors.email}
+                disabled={loading}
+              />
+
+              <Input
+                type="password"
+                placeholder="Digite sua senha"
+                value={formData.password}
+                onChange={handleInputChange('password')}
+                icon={Lock}
+                error={errors.password}
+                disabled={loading}
+              />
+            </div>
+
+            <Button
+              variant="primary"
+              size="md"
+              loading={loading}
+              className="w-full"
+              onClick={handleSubmit}
+            >
+              Entrar
+            </Button>
+          </div>
+
+          {/* Debug info - remover em produção */}
+          <div className="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600">
+            <p><strong>Para teste:</strong></p>
+            <p>Email: admin@cube.com</p>
+            <p>Senha: admin123</p>
+            <p className="mt-1 text-slate-500">
+              API: {import.meta.env.VITE_API_URL || 'http://localhost:3001'}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-xs text-slate-400">
+            CUBE v1.0
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

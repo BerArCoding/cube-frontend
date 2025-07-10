@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
-import { Input, Button } from '../components/ui';
-import CubeLogo from '../components/ui/CubeLogo';
-import authAPI from '../services/auth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Input, Button, CubeLogo } from '../components/ui';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +11,13 @@ const Login = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Pegar a rota de onde o usuário veio, ou usar dashboard como padrão
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleInputChange = (field) => (e) => {
     setFormData(prev => ({
@@ -56,37 +63,29 @@ const Login = () => {
     try {
       console.log('Tentando fazer login com:', { email: formData.email });
       
-      // Chamar a API real
-      const response = await authAPI.login({
+      // Usar o hook de autenticação
+      const result = await login({
         email: formData.email,
         password: formData.password
       });
 
-      console.log('Login realizado com sucesso:', response);
-      
-      // Exibir sucesso
-      alert(`Login realizado com sucesso!\n\nUsuário: ${response.user.nome}\nEmail: ${response.user.email}\nTipo: ${response.user.tipo}`);
-      
-      // Aqui você pode redirecionar para o dashboard
-      // window.location.href = '/dashboard';
+      if (result.success) {
+        console.log('Login realizado com sucesso:', result.user);
+        
+        // Redirecionar para dashboard ou rota original
+        navigate(from, { replace: true });
+      } else {
+        // Tratar erro do login
+        setErrors({ 
+          general: result.error || 'Erro ao fazer login. Tente novamente.' 
+        });
+      }
       
     } catch (error) {
       console.error('Erro no login:', error);
-      
-      // Tratar diferentes tipos de erro
-      if (error.message.includes('fetch')) {
-        setErrors({ 
-          general: 'Erro de conexão. Verifique se o servidor está rodando.' 
-        });
-      } else if (error.message.includes('autenticação')) {
-        setErrors({ 
-          general: 'Email ou senha incorretos.' 
-        });
-      } else {
-        setErrors({ 
-          general: 'Erro ao fazer login. Tente novamente.' 
-        });
-      }
+      setErrors({ 
+        general: 'Erro inesperado. Tente novamente.' 
+      });
     } finally {
       setLoading(false);
     }

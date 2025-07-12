@@ -9,7 +9,8 @@ import {
   Shield, 
   Settings,
   Menu,
-  X
+  X,
+  Users
 } from 'lucide-react';
 
 const Header = ({ title = "CUBE Dashboard" }) => {
@@ -22,6 +23,11 @@ const Header = ({ title = "CUBE Dashboard" }) => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleLogoClick = () => {
+    navigate('/dashboard');
+    setIsMobileMenuOpen(false); // Fechar menu mobile se estiver aberto
   };
 
   // Fechar dropdown quando clicar fora
@@ -40,24 +46,30 @@ const Header = ({ title = "CUBE Dashboard" }) => {
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo e Título */}
+          {/* Logo e Título - AGORA COM LINK */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
-              <div className="h-10 w-20 p-2 gradient-bg rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-200">
-                <CubeLogo className="h-6 w-auto" shadow={false} />
-              </div>
+              <button
+                onClick={handleLogoClick}
+                className="h-10 w-20 p-2 gradient-bg rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer group"
+                title="Voltar ao Dashboard"
+              >
+                <CubeLogo className="h-6 w-auto group-hover:scale-110 transition-transform duration-200" shadow={false} />
+              </button>
               <div className="hidden lg:block">
-                <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+                <button
+                  onClick={handleLogoClick}
+                  className="text-xl font-bold text-slate-800 tracking-tight hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                  title="Voltar ao Dashboard"
+                >
                   {title}
-                </h1>
+                </button>
               </div>
             </div>
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            
-
             {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -136,6 +148,23 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Editar informações pessoais</p>
                       </div>
                     </button>
+                    {isAdmin() && (
+                      <button 
+                        onClick={() => {
+                          navigate('/candidates');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                      >
+                        <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <div className="text-left">
+                          <span className="font-medium">Gerenciar Candidatos</span>
+                          <p className="text-xs text-slate-500">Visualizar e gerenciar candidatos</p>
+                        </div>
+                      </button>
+                    )}
                     <button className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
                       <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
                         <Settings className="h-4 w-4" />
@@ -183,9 +212,15 @@ const Header = ({ title = "CUBE Dashboard" }) => {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white">
           <div className="px-4 py-4 space-y-3">
-            {/* Mobile Title */}
+            {/* Mobile Title - AGORA COM LINK */}
             <div className="lg:hidden">
-              <h1 className="text-lg font-bold text-slate-800">{title}</h1>
+              <button
+                onClick={handleLogoClick}
+                className="text-lg font-bold text-slate-800 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
+                title="Voltar ao Dashboard"
+              >
+                {title}
+              </button>
             </div>
 
             {/* User Info Mobile */}
@@ -208,11 +243,22 @@ const Header = ({ title = "CUBE Dashboard" }) => {
 
             {/* Mobile Actions */}
             <div className="space-y-2">
-              
               <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
                 <User className="h-4 w-4" />
                 <span>Meu Perfil</span>
               </button>
+              {isAdmin() && (
+                <button 
+                  onClick={() => {
+                    navigate('/candidates');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Gerenciar Candidatos</span>
+                </button>
+              )}
               <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
                 <Settings className="h-4 w-4" />
                 <span>Configurações</span>

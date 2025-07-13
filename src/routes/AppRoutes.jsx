@@ -5,6 +5,7 @@ import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute';
 // Importar páginas
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
+import RSSFeed from '../pages/RSSFeed';
 
 const AppRoutes = () => {
   return (
@@ -33,6 +34,15 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/rss-feed" 
+            element={
+              <ProtectedRoute>
+                <RSSFeed />
               </ProtectedRoute>
             } 
           />

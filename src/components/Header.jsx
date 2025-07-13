@@ -145,6 +145,23 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Preferências do sistema</p>
                       </div>
                     </button>
+                    <button 
+                      onClick={() => {
+                        navigate('/rss-feed');
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <span className="font-medium">RSS Feed</span>
+                        <p className="text-xs text-slate-500">Ultimas noticias</p>
+                      </div>
+                    </button>
                   </div>
 
                   {/* Logout */}
@@ -216,6 +233,18 @@ const Header = ({ title = "CUBE Dashboard" }) => {
               <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
                 <Settings className="h-4 w-4" />
                 <span>Configurações</span>
+              </button>
+              <button 
+                onClick={() => {
+                  navigate('/rss-feed');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+                <span>RSS Feed</span>
               </button>
               <button
                 onClick={handleLogout}

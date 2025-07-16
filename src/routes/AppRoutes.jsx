@@ -6,6 +6,7 @@ import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
 import RSSFeed from '../pages/RSSFeed';
+import Configuracoes from '../pages/Configuracoes';
 
 const AppRoutes = () => {
   return (
@@ -43,6 +44,15 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <RSSFeed />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/configuracoes" 
+            element={
+              <ProtectedRoute>
+                <Configuracoes />
               </ProtectedRoute>
             } 
           />

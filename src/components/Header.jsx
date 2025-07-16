@@ -136,7 +136,13 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Editar informações pessoais</p>
                       </div>
                     </button>
-                    <button className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
+                    <button 
+                      onClick={() => {
+                        navigate('/configuracoes');
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                    >
                       <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
                         <Settings className="h-4 w-4" />
                       </div>
@@ -230,7 +236,13 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                 <User className="h-4 w-4" />
                 <span>Meu Perfil</span>
               </button>
-              <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  navigate('/configuracoes');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
                 <Settings className="h-4 w-4" />
                 <span>Configurações</span>
               </button>

@@ -20,7 +20,7 @@ class DominioService {
   async makeRequest(endpoint, options = {}) {
     try {
       const url = `${this.baseUrl}${endpoint}`;
-      console.log(`🔍 Fazendo requisição para: ${url}`);
+      
 
       const response = await fetch(url, {
         headers: this.getHeaders(),
@@ -51,7 +51,7 @@ class DominioService {
         throw new Error(data.error || data.message || 'Erro desconhecido da API');
       }
 
-      console.log(`✅ Dados recebidos:`, data);
+      
       return data;
 
     } catch (error) {
@@ -78,7 +78,7 @@ class DominioService {
     const endpoint = `?${params.toString()}`;
 
     try {
-      console.log('📋 Listando domínios...', { ativo, busca, limit, isRSSapp });
+      
       const response = await this.makeRequest(endpoint);
       return response.data || [];
     } catch (error) {
@@ -90,7 +90,7 @@ class DominioService {
   // Obter domínio específico por ID (admin)
   async obterDominio(id) {
     try {
-      console.log(`🔍 Obtendo domínio ID: ${id}`);
+      
       const response = await this.makeRequest(`/${id}`);
       return response.data;
     } catch (error) {
@@ -140,7 +140,7 @@ class DominioService {
     }
 
     try {
-      console.log('➕ Criando novo domínio:', { nome, dominio, isRSSapp });
+      
       
       const response = await this.makeRequest('', {
         method: 'POST',
@@ -175,7 +175,7 @@ class DominioService {
     }
 
     try {
-      console.log(`📝 Atualizando domínio ID: ${id}`, dominioData);
+      
       
       const updateData = {};
       if (nome !== undefined) updateData.nome = nome.trim();
@@ -200,7 +200,7 @@ class DominioService {
   // Deletar domínio (admin)
   async deletarDominio(id) {
     try {
-      console.log(`🗑️ Deletando domínio ID: ${id}`);
+      
       
       const response = await this.makeRequest(`/${id}`, {
         method: 'DELETE'
@@ -216,7 +216,7 @@ class DominioService {
   // Verificar funcionamento do domínio (admin)
   async verificarDominio(id) {
     try {
-      console.log(`🔍 Verificando domínio ID: ${id}`);
+      
       
       const response = await this.makeRequest(`/${id}/verificar`, {
         method: 'POST'
@@ -262,7 +262,7 @@ class DominioService {
     });
 
     try {
-      console.log(`📦 Importando ${dominiosValidados.length} domínios...`);
+      
       
       const response = await this.makeRequest('/importar', {
         method: 'POST',
@@ -279,7 +279,7 @@ class DominioService {
   // Buscar domínios com filtro
   async buscarDominios(termo, isRSSapp = undefined) {
     try {
-      console.log(`🔍 Buscando domínios: ${termo}`);
+      
       return await this.listarDominios({ busca: termo, ativo: undefined, isRSSapp });
     } catch (error) {
       console.error('❌ Erro na busca de domínios:', error);
@@ -290,7 +290,7 @@ class DominioService {
   // Obter domínios ativos apenas (para sugestões)
   async obterDominiosAtivos(limit = 20, isRSSapp = undefined) {
     try {
-      console.log('📋 Obtendo domínios ativos para sugestões...');
+      
       return await this.listarDominios({ ativo: true, limit, isRSSapp });
     } catch (error) {
       console.error('❌ Erro ao obter domínios ativos:', error);
@@ -301,7 +301,7 @@ class DominioService {
   // Obter apenas sites de notícias ativos
   async obterSitesNoticiasAtivos(limit = 20) {
     try {
-      console.log('📰 Obtendo sites de notícias ativos...');
+      
       return await this.listarDominios({ ativo: true, limit, isRSSapp: false });
     } catch (error) {
       console.error('❌ Erro ao obter sites de notícias:', error);
@@ -312,7 +312,7 @@ class DominioService {
   // Obter apenas feeds RSS.app ativos
   async obterFeedsRSSappAtivos(limit = 20) {
     try {
-      console.log('📡 Obtendo feeds RSS.app ativos...');
+      
       return await this.listarDominios({ ativo: true, limit, isRSSapp: true });
     } catch (error) {
       console.error('❌ Erro ao obter feeds RSS.app:', error);

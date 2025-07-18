@@ -121,10 +121,10 @@ const Configuracoes = () => {
     setError('');
     
     try {
-      console.log('🔄 Carregando domínios...');
+      
       const dominiosData = await dominioService.listarDominios({ ativo: undefined });
       setDominios(dominiosData);
-      console.log(`✅ ${dominiosData.length} domínios carregados`);
+      
     } catch (error) {
       console.error('❌ Erro ao carregar domínios:', error);
       setError(`Erro ao carregar domínios: ${error.message}`);
@@ -140,7 +140,7 @@ const Configuracoes = () => {
     setError('');
     
     try {
-      console.log('🔄 Carregando usuários...');
+      
       const filters = {
         search: userSearchTerm,
         ...userFilters
@@ -160,7 +160,7 @@ const Configuracoes = () => {
       }
       
       setUsuarios(usuariosData);
-      console.log(`✅ ${usuariosData.length} usuários carregados`);
+      
     } catch (error) {
       console.error('❌ Erro ao carregar usuários:', error);
       setError(`Erro ao carregar usuários: ${error.message}`);
@@ -260,7 +260,7 @@ const Configuracoes = () => {
         throw new Error('Formato de email inválido');
       }
 
-      console.log('📝 Salvando dados do perfil...');
+      
       
       // Preparar dados para envio (apenas nome e email podem ser alterados)
       const dataToUpdate = {
@@ -271,7 +271,7 @@ const Configuracoes = () => {
       // Chamar API para atualizar perfil
       const result = await userService.updateProfile(dataToUpdate);
       
-      console.log('✅ Perfil atualizado:', result);
+      
       
       // Atualizar estado original para refletir as mudanças salvas
       setOriginalUserData({
@@ -325,7 +325,7 @@ const Configuracoes = () => {
         throw new Error('A nova senha deve ser diferente da senha atual');
       }
 
-      console.log('🔐 Alterando senha...');
+      
 
       // Chamar API para alterar senha
       await userService.changePassword({
@@ -333,7 +333,7 @@ const Configuracoes = () => {
         novaSenha: passwordData.novaSenha.trim()
       });
 
-      console.log('✅ Senha alterada com sucesso');
+      
 
       // Limpar formulário de senha
       setPasswordData({
@@ -374,16 +374,16 @@ const Configuracoes = () => {
 
       let result;
       if (editingDominio) {
-        console.log(`📝 Atualizando domínio ID: ${editingDominio.id}`);
+        
         result = await dominioService.atualizarComoAdmin(editingDominio.id, formData);
         setSuccess('Domínio atualizado com sucesso!');
       } else {
-        console.log('➕ Criando novo domínio');
+        
         result = await dominioService.criarComoAdmin(formData);
         setSuccess('Domínio criado com sucesso!');
       }
 
-      console.log('✅ Operação realizada:', result);
+      
       
       // Recarregar lista e fechar formulário
       await carregarDominios();
@@ -406,7 +406,7 @@ const Configuracoes = () => {
     setSuccess('');
 
     try {
-      console.log(`🗑️ Deletando domínio ID: ${id}`);
+      
       await dominioService.deletarComoAdmin(id);
       setSuccess('Domínio removido com sucesso!');
       
@@ -442,7 +442,7 @@ const Configuracoes = () => {
     setSuccess('');
 
     try {
-      console.log(`🔍 Verificando domínio ID: ${id}`);
+      
       const resultado = await dominioService.verificarComoAdmin(id);
       
       if (resultado.verificacaoOk) {
@@ -451,7 +451,7 @@ const Configuracoes = () => {
         setError(`Falha na verificação do domínio ${resultado.dominio}: ${resultado.erro}`);
       }
       
-      console.log('🔍 Resultado da verificação:', resultado);
+      
       
     } catch (error) {
       console.error('❌ Erro ao verificar domínio:', error);
@@ -502,7 +502,7 @@ const Configuracoes = () => {
 
       let result;
       if (editingUser) {
-        console.log(`📝 Atualizando usuário ID: ${editingUser.id}`);
+        
         // Para edição, remover senha do payload se estiver vazia
         const updateData = { ...userFormData };
         if (!updateData.senha) {
@@ -511,12 +511,12 @@ const Configuracoes = () => {
         result = await userService.updateUser(editingUser.id, updateData);
         setSuccess('Usuário atualizado com sucesso!');
       } else {
-        console.log('➕ Criando novo usuário');
+        
         result = await userService.createUser(userFormData);
         setSuccess('Usuário criado com sucesso!');
       }
 
-      console.log('✅ Operação realizada:', result);
+      
       
       // Recarregar lista e fechar formulário
       await carregarUsuarios();
@@ -546,7 +546,7 @@ const Configuracoes = () => {
     setSuccess('');
 
     try {
-      console.log(`🗑️ Deletando usuário ID: ${id}`);
+      
       await userService.deleteUser(id);
       setSuccess('Usuário removido com sucesso!');
       

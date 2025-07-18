@@ -104,7 +104,7 @@ const RSSFeed = () => {
       setLoadingRssApp(true);
       setError(null);
       
-      console.log(`🔍 Buscando feed RSS.APP: ${url}`);
+      
       
       // Fazer requisição para buscar o feed RSS
       const response = await fetch(url);
@@ -148,7 +148,7 @@ const RSSFeed = () => {
         };
       });
       
-      console.log(`✅ ${feedNews.length} notícias carregadas do RSS.APP`);
+      
       
       // Ordenar por data mais recente primeiro
       const sortedNews = feedNews.sort((a, b) => {
@@ -175,11 +175,11 @@ const RSSFeed = () => {
   useEffect(() => {
   const carregarRSSAppFeeds = async () => {
     try {
-      console.log('🔄 Carregando domínios...');
+      
       const dominiosData = await dominioService.obterFeedsRSSappAtivos();
-      console.log(dominiosData);
+      
       setRssAppFeeds(dominiosData);
-      console.log(`✅ ${dominiosData.length} domínios carregados`);
+      
     } catch (error) {
       console.error('❌ Erro ao carregar domínios:', error);
       setError(`Erro ao carregar domínios: ${error.message}`);
@@ -215,7 +215,7 @@ const RSSFeed = () => {
 
       setLoadingDominios(true);
       try {
-        console.log('📋 Carregando domínios cadastrados...');
+        
         const dominios = await dominioService.listarDominios({ 
           ativo: true, 
           limit: 100 ,
@@ -232,7 +232,7 @@ const RSSFeed = () => {
         }));
 
         setDominiosCadastrados(dominiosFormatados);
-        console.log(`✅ ${dominiosFormatados.length} domínios carregados:`, dominiosFormatados.map(d => `${d.name} (${d.domain})`));
+        
       } catch (error) {
         console.error('❌ Erro ao carregar domínios:', error);
         setDominiosCadastrados([]);
@@ -272,7 +272,7 @@ const RSSFeed = () => {
     setError(null);
 
     try {
-      console.log(`🔍 Buscando notícias: categoria="${category}", busca="${search}"`, dateFilterOptions);
+      
       
       let newsData = [];
       const settings = countrySettings[selectedCountry];
@@ -290,10 +290,10 @@ const RSSFeed = () => {
       
       if (finalQuery || search) {
         const searchQuery = finalQuery || search;
-        console.log(`📡 Query final para API: "${searchQuery}"`);
+        
         newsData = await rssService.fetchGoogleNews(searchQuery, fetchOptions);
       } else if (searchMode === 'domain' && domainFilter) {
-        console.log(`🌐 Buscando apenas no domínio: ${domainFilter}`);
+        
         newsData = await rssService.fetchGoogleNews(`site:${domainFilter}`, fetchOptions);
       } else {
         newsData = await rssService.fetchByCategory(category, fetchOptions);
@@ -305,7 +305,7 @@ const RSSFeed = () => {
         return dateB - dateA;
       });
 
-      console.log(`✅ ${sortedNews.length} notícias carregadas e ordenadas por data`);
+      
       
       setNews(sortedNews);
       setLastUpdate(new Date());
@@ -355,7 +355,7 @@ const RSSFeed = () => {
       
       if (isConnected && feeds) {
         setConnectionStatus('connected');
-        console.log('✅ Conexão OK. Feeds disponíveis:', feeds);
+        
       } else {
         setConnectionStatus('error');
         setError('Não foi possível conectar com a API RSS');
@@ -387,7 +387,7 @@ const RSSFeed = () => {
   // Carregar notícias iniciais (modificado para incluir RSS.APP)
   useEffect(() => {
     const initializeRSS = async () => {
-      console.log('🚀 Inicializando RSS Feed...');
+      
       
       if (!isAuthenticated) return;
       
@@ -970,7 +970,7 @@ const RSSFeed = () => {
                         if (!authAPI.isAuthenticated()) return;
                         setLoadingDominios(true);
                         try {
-                          console.log('🔄 Recarregando domínios cadastrados...');
+                          
                           const dominios = await dominioService.listarDominios({ 
                             ativo: true, 
                             limit: 100,
@@ -987,7 +987,7 @@ const RSSFeed = () => {
                           }));
 
                           setDominiosCadastrados(dominiosFormatados);
-                          console.log(`✅ ${dominiosFormatados.length} domínios recarregados`);
+                          
                         } catch (error) {
                           console.error('❌ Erro ao recarregar domínios:', error);
                         } finally {

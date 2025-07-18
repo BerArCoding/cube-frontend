@@ -39,7 +39,7 @@ class RSSService {
   async makeRequest(endpoint, options = {}) {
     try {
       const url = `${this.apiEndpoint}${endpoint}`;
-      console.log(`🔍 Fazendo requisição para: ${url}`);
+      
 
       const response = await fetch(url, {
         headers: this.getHeaders(),
@@ -65,7 +65,7 @@ class RSSService {
         throw new Error(data.error || data.message || 'Erro desconhecido da API');
       }
 
-      console.log(`✅ Dados recebidos:`, data);
+      
       return data;
 
     } catch (error) {
@@ -82,7 +82,7 @@ class RSSService {
   getFromCache(key) {
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      console.log('📦 Dados obtidos do cache');
+      
       return cached.data;
     }
     return null;
@@ -107,15 +107,15 @@ class RSSService {
     // Filtros de data
     if (options.dateRange) {
       params.append('dateRange', options.dateRange);
-      console.log(`📅 Aplicando filtro de período: ${options.dateRange}`);
+      
     } else {
       if (options.dateFrom) {
         params.append('dateFrom', options.dateFrom);
-        console.log(`📅 Data inicial: ${options.dateFrom}`);
+        
       }
       if (options.dateTo) {
         params.append('dateTo', options.dateTo);
-        console.log(`📅 Data final: ${options.dateTo}`);
+        
       }
     }
     
@@ -157,7 +157,7 @@ class RSSService {
     }
 
     try {
-      console.log(`🔍 Buscando Google News com filtros:`, { query, dateRange, dateFrom, dateTo });
+     
       const response = await this.makeRequest(endpoint);
       
       // Salvar no cache
@@ -205,7 +205,7 @@ class RSSService {
     }
 
     try {
-      console.log(`📂 Buscando categoria ${category} com filtros:`, { dateRange, dateFrom, dateTo });
+      
       const response = await this.makeRequest(endpoint);
       
       // Salvar no cache
@@ -239,7 +239,7 @@ class RSSService {
     });
 
     try {
-      console.log(`🔗 Buscando RSS customizado com filtros:`, { url, dateRange, dateFrom, dateTo });
+      
       
       const response = await this.makeRequest(`/custom?${params}`, {
         method: 'POST',
@@ -271,7 +271,7 @@ class RSSService {
       ...this.prepareDateFilterOptions(dateFilter)
     };
 
-    console.log(`🎯 Busca com filtro de data:`, { type, dateFilter, options });
+    
 
     switch (type) {
       case 'search':
@@ -306,7 +306,7 @@ class RSSService {
   // Listar feeds disponíveis (não precisa autenticação)
   async getAvailableFeeds() {
     try {
-      console.log('📋 Listando feeds disponíveis...');
+      
       
       // Usar endpoint público (sem autenticação)
       const url = `${this.apiEndpoint}/feeds`;
@@ -333,7 +333,7 @@ class RSSService {
   // Testar conectividade da API
   async testConnection() {
     try {
-      console.log('🧪 Testando conexão com API...');
+      
       
       // Usar endpoint público de teste
       const url = `${this.apiEndpoint}/test`;
@@ -341,7 +341,7 @@ class RSSService {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Conexão OK:', data);
+        
         return data.success;
       } else {
         console.error('❌ Teste falhou:', response.status);
@@ -361,11 +361,11 @@ class RSSService {
     }
 
     const articles = apiResponse.data.articles;
-    console.log(`✅ Formatando ${articles.length} notícias da API`);
+    
 
     // Informações sobre filtros aplicados
     if (apiResponse.dateFilter) {
-      console.log(`📅 Filtro de data aplicado:`, apiResponse.dateFilter);
+      
     }
 
     return articles.map((item, index) => ({
@@ -385,11 +385,11 @@ class RSSService {
 
   // Buscar notícias de múltiplas categorias com filtros de data
   async fetchMultiCategory(categories = ['general', 'technology', 'business'], options = {}) {
-    console.log(`🌍 Buscando notícias de ${categories.length} categorias com filtros...`);
+    
 
     const promises = categories.map(async (category) => {
       try {
-        console.log(`🔄 Buscando ${category}...`);
+     
         const news = await this.fetchByCategory(category, { ...options, useCache: false });
         
         return news.map(item => ({
@@ -405,7 +405,7 @@ class RSSService {
     const results = await Promise.all(promises);
     const allNews = results.flat();
     
-    console.log(`📊 Total de notícias coletadas: ${allNews.length}`);
+   
     
     if (allNews.length === 0) {
       throw new Error('Nenhuma notícia foi encontrada em nenhuma categoria');
@@ -429,7 +429,7 @@ class RSSService {
 
   // Buscar principais notícias com filtros de data
   async fetchTopStories(options = {}) {
-    console.log('🏆 Buscando principais notícias com filtros...');
+  
     return this.fetchGoogleNews('breaking news', { ...options, limit: 10 });
   }
 
@@ -442,7 +442,7 @@ class RSSService {
       dateFilter = {}
     } = options;
 
-    console.log(`🔄 Iniciando monitoramento com filtros: ${category} a cada ${interval/1000/60} minutos`);
+  
 
     const monitor = async () => {
       try {
@@ -456,7 +456,7 @@ class RSSService {
           ? await this.fetchByCategory(category, searchOptions)
           : await this.fetchGoogleNews(query, searchOptions);
         
-        console.log(`📨 ${news.length} notícias encontradas no monitoramento`);
+        
         callback(news);
       } catch (error) {
         console.error('❌ Erro no monitoramento RSS:', error);
@@ -472,7 +472,7 @@ class RSSService {
 
     // Retornar função para parar monitoramento
     return () => {
-      console.log('⏹️ Parando monitoramento RSS');
+      
       clearInterval(intervalId);
     };
   }
@@ -492,7 +492,7 @@ class RSSService {
       throw new Error(`Período inválido: ${range}. Use: ${Object.keys(dateRangeOptions).join(', ')}`);
     }
 
-    console.log(`📅 Buscando notícias do período: ${range}`);
+    
 
     return this.fetchWithDateFilter({
       ...searchOptions,
@@ -502,7 +502,7 @@ class RSSService {
 
   // Análise de tendências por período
   async analyzeTrends(query, periods = ['today', 'yesterday', 'week']) {
-    console.log(`📈 Analisando tendências para: ${query}`);
+    
 
     const results = {};
     
@@ -530,7 +530,7 @@ class RSSService {
   // Limpar cache manualmente
   clearCache() {
     this.cache.clear();
-    console.log('🧹 Cache limpo');
+    
   }
 
   // Buscar notícias com retry automático

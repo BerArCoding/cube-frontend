@@ -13,7 +13,7 @@ const userService = {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('🔄 Atualizando perfil do usuário...');
+      
       
       const response = await fetch(`${API_BASE_URL}/api/users/${currentUser.id}`, {
         method: 'PUT',
@@ -37,7 +37,7 @@ const userService = {
         localStorage.setItem('cube_user', JSON.stringify(updatedUser));
       }
 
-      console.log('✅ Perfil atualizado com sucesso');
+      
       return data;
       
     } catch (error) {
@@ -91,7 +91,7 @@ const userService = {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('🔄 Alterando senha do usuário...');
+      
       
       const response = await fetch(`${API_BASE_URL}/api/users/${currentUser.id}/password`, {
         method: 'PUT',
@@ -111,7 +111,7 @@ const userService = {
       }
 
       const data = await response.json();
-      console.log('✅ Senha alterada com sucesso');
+      
       return data;
       
     } catch (error) {
@@ -144,7 +144,7 @@ const userService = {
       const queryString = queryParams.toString();
       const url = `${API_BASE_URL}/api/users${queryString ? `?${queryString}` : ''}`;
 
-      console.log('🔄 Carregando lista de usuários...');
+      
       
       const response = await fetch(url, {
         method: 'GET',
@@ -159,7 +159,7 @@ const userService = {
       }
 
       const data = await response.json();
-      console.log('✅ Usuários carregados com sucesso');
+      
       return data;
       
     } catch (error) {
@@ -177,7 +177,7 @@ const userService = {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('🔄 Criando novo usuário...');
+      
       
       const response = await fetch(`${API_BASE_URL}/api/users`, {
         method: 'POST',
@@ -194,7 +194,7 @@ const userService = {
       }
 
       const data = await response.json();
-      console.log('✅ Usuário criado com sucesso');
+      
       return data;
       
     } catch (error) {
@@ -212,7 +212,7 @@ const userService = {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log(`🔄 Atualizando usuário ID: ${userId}...`);
+      
       
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: 'PUT',
@@ -229,7 +229,7 @@ const userService = {
       }
 
       const data = await response.json();
-      console.log('✅ Usuário atualizado com sucesso');
+      
       return data;
       
     } catch (error) {
@@ -247,7 +247,7 @@ const userService = {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log(`🔄 Deletando usuário ID: ${userId}...`);
+      
       
       const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: 'DELETE',
@@ -262,7 +262,7 @@ const userService = {
       }
 
       const data = await response.json();
-      console.log('✅ Usuário deletado com sucesso');
+      
       return data;
       
     } catch (error) {

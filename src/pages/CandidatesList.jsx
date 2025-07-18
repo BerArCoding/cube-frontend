@@ -40,7 +40,6 @@ const CandidatesList = () => {
         const response = await cargoService.getUniqueCargoNames();
         setCargos(response.data);
         
-        console.log('Cargos carregados do banco:', response.data);
       } catch (error) {
         console.error('Erro ao carregar cargos:', error);
         setCargos([]);

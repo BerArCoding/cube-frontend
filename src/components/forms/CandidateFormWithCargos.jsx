@@ -89,8 +89,6 @@ const CandidateFormWithCargos = ({ onSubmit, initialData = null, isLoading = fal
       cargoPretendido: formData.cargoPretendido?.trim() || null,
       instagramHandle: formData.instagramHandle?.trim() || null
     };
-
-    console.log('Dados preparados para envio:', dataToSubmit);
     
     onSubmit(dataToSubmit);
   };

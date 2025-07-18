@@ -27,12 +27,10 @@ const EditCandidate = () => {
       setError(null);
       
       try {
-        console.log('Carregando candidato ID:', id);
         const response = await candidateService.getCandidateById(id, true); // incluir inativos
         
         if (response.success && response.data) {
           setCandidate(response.data);
-          console.log('Candidato carregado:', response.data);
         } else {
           throw new Error('Candidato não encontrado');
         }
@@ -61,7 +59,6 @@ const EditCandidate = () => {
     setIsLoading(true);
     
     try {
-      console.log('Atualizando candidato:', id, candidateData);
       
       const response = await candidateService.updateCandidate(id, candidateData);
       
@@ -222,7 +219,7 @@ const EditCandidate = () => {
         )}
 
         {/* Debug Info - remover em produção */}
-        {import.meta.env.DEV && (
+        {/* {import.meta.env.DEV && (
           <div className="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600">
             <p><strong>Debug:</strong></p>
             <p>Candidate ID: {id}</p>
@@ -230,7 +227,7 @@ const EditCandidate = () => {
             <p>Endpoint: PUT /api/candidates/{id}</p>
             <p>Status: {isLoading ? 'Salvando...' : 'Pronto'}</p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

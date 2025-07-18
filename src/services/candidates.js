@@ -3,7 +3,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const candidateService = {
   // Criar novo candidato
   async createCandidate(candidateData) {
-    console.log('Tentando criar candidato:', candidateData);
     
     if (!candidateData.nome?.trim()) {
       throw new Error('Nome é obrigatório');
@@ -17,7 +16,6 @@ const candidateService = {
 
   // Atualizar candidato existente
   async updateCandidate(id, candidateData) {
-    console.log('Tentando atualizar candidato:', id, candidateData);
     
     if (!candidateData.nome?.trim()) {
       throw new Error('Nome é obrigatório');
@@ -45,7 +43,6 @@ const candidateService = {
 
   // Inativar candidato (soft delete)
   async deactivateCandidate(id) {
-    console.log('Inativando candidato:', id);
     
     return makeRequestWithFallback(`${API_URL}/api/candidates/${id}`, {
       method: 'DELETE'
@@ -54,7 +51,6 @@ const candidateService = {
 
   // Reativar candidato
   async reactivateCandidate(id) {
-    console.log('Reativando candidato:', id);
     
     return makeRequestWithFallback(`${API_URL}/api/candidates/${id}/reactivate`, {
       method: 'PUT'

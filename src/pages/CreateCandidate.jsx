@@ -104,14 +104,14 @@ const CreateCandidate = () => {
         </div>
 
         {/* Debug Info - remover em produção */}
-        {import.meta.env.DEV && (
+        {/* {import.meta.env.DEV && (
           <div className="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600">
             <p><strong>Debug:</strong></p>
             <p>API: {import.meta.env.VITE_API_URL || 'http://localhost:3001'}</p>
             <p>Endpoint: POST /api/candidates</p>
             <p>Status: {isLoading ? 'Carregando...' : 'Pronto'}</p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

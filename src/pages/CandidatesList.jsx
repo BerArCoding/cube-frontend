@@ -18,6 +18,7 @@ import {
   UserPlus,
   Filter
 } from 'lucide-react';
+import CandidateAvatar from '../components/CandidateAvatar.jsx';
 
 const CandidatesList = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const CandidatesList = () => {
         setAllCandidates(responseAll.data || []);
       } catch (error) {
         console.error('Erro ao carregar contagem de candidatos:', error);
-        setAllCandidates([]);
+        setAllCandidates([]); // SEM MOCK AQUI TAMBÉM!
       }
     };
 
@@ -91,35 +92,7 @@ const CandidatesList = () => {
         setCandidates(response.data || []);
       } catch (error) {
         console.error('Erro ao carregar candidatos:', error);
-        // Fallback para dados mock
-        const mockCandidates = [
-          {
-            id: '1',
-            nome: 'João Silva Santos',
-            foto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-            cargoAtual: 'Vereador',
-            redutoOrigem: 'São Paulo - SP',
-            votosUltimaEleicao: 15420,
-            cargoPretendido: 'Deputado Estadual',
-            pontuacaoViabilidade: 7.8,
-            ativo: true,
-            criadoEm: '2025-01-10'
-          },
-          {
-            id: '2',
-            nome: 'Maria Oliveira Costa',
-            foto: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-            cargoAtual: 'Prefeita',
-            redutoOrigem: 'Rio de Janeiro - RJ',
-            votosUltimaEleicao: 89750,
-            cargoPretendido: 'Governadora',
-            pontuacaoViabilidade: 8.9,
-            ativo: false,
-            criadoEm: '2025-01-08'
-          }
-        ];
-        setCandidates(mockCandidates);
-        setAllCandidates(mockCandidates); // Para contagem também
+        setCandidates([]); // SEM MOCK PORRA!
       } finally {
         setLoading(false);
       }
@@ -363,24 +336,11 @@ const CandidatesList = () => {
                   {/* Header do card */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="h-12 w-12 rounded-lg overflow-hidden bg-slate-100 relative">
-                        {candidate.foto ? (
-                          <img
-                            src={candidate.foto}
-                            alt={candidate.nome}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-medium">
-                            {candidate.nome.charAt(0)}
-                          </div>
-                        )}
-                        {!candidate.ativo && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                            <UserMinus className="h-4 w-4 text-white" />
-                          </div>
-                        )}
-                      </div>
+                      <CandidateAvatar 
+                        candidate={candidate} 
+                        size="md" 
+                        showStatus={true}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
                           <h3 className="text-lg font-semibold text-slate-900 truncate">

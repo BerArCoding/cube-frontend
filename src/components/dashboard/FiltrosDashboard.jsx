@@ -1,7 +1,6 @@
-// components/dashboard/FiltrosDashboard.jsx - VERSÃO DEFINITIVA
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { Filter, Users, Briefcase, Check, ChevronDown } from 'lucide-react';
+import { Filter, Users, Briefcase, X, Search, Check } from 'lucide-react';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const FiltrosDashboard = ({ onFiltroChange }) => {
@@ -14,12 +13,12 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     cargos: []
   });
   const [loading, setLoading] = useState(true);
+  const [buscaCandidatos, setBuscaCandidatos] = useState('');
+  const [buscaCargos, setBuscaCargos] = useState('');
   const [dropdownAberto, setDropdownAberto] = useState({ candidatos: false, cargos: false });
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   
-  // Refs para os botões dos dropdowns
-  const candidatosButtonRef = useRef(null);
-  const cargosButtonRef = useRef(null);
+  const candidatosRef = useRef(null);
+  const cargosRef = useRef(null);
 
   useEffect(() => {
     carregarOpcoesFiltros();
@@ -52,46 +51,22 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     }
   };
 
-  const abrirDropdown = (tipo) => {
-    const buttonRef = tipo === 'candidatos' ? candidatosButtonRef : cargosButtonRef;
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      
-      // ✅ MELHORAR - Verificar se há espaço suficiente embaixo
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 256; // max-h-64 = 16rem = 256px
-      const shouldOpenUpward = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
-      
-      setDropdownPosition({
-        top: shouldOpenUpward 
-          ? rect.top + window.scrollY - dropdownHeight - 4 
-          : rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-    setDropdownAberto({ candidatos: false, cargos: false, [tipo]: true });
-  };
+  // Fechar dropdown quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        candidatosRef.current && !candidatosRef.current.contains(event.target) &&
+        cargosRef.current && !cargosRef.current.contains(event.target)
+      ) {
+        setDropdownAberto({ candidatos: false, cargos: false });
+      }
+    };
 
-  const toggleCandidato = (candidatoId, event) => {
-    // ✅ Prevenir propagação do evento
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    if (candidatoId === 'todos') {
-      const todosCandidatos = opcoes.candidatos.map(c => c.id);
-      const todosSelecionados = filtros.candidatoIds.length === todosCandidatos.length;
-      const novosFiltros = { 
-        ...filtros, 
-        candidatoIds: todosSelecionados ? [] : todosCandidatos 
-      };
-      setFiltros(novosFiltros);
-      onFiltroChange(novosFiltros);
-      return;
-    }
-
+  const toggleCandidato = (candidatoId) => {
     const isSelected = filtros.candidatoIds.includes(candidatoId);
     const novosFiltros = {
       ...filtros,
@@ -103,25 +78,7 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     onFiltroChange(novosFiltros);
   };
 
-  const toggleCargo = (cargoId, event) => {
-    // ✅ Prevenir propagação do evento
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-
-    if (cargoId === 'todos') {
-      const todosCargos = opcoes.cargos.map(c => c.id);
-      const todosSelecionados = filtros.cargoIds.length === todosCargos.length;
-      const novosFiltros = { 
-        ...filtros, 
-        cargoIds: todosSelecionados ? [] : todosCargos 
-      };
-      setFiltros(novosFiltros);
-      onFiltroChange(novosFiltros);
-      return;
-    }
-
+  const toggleCargo = (cargoId) => {
     const isSelected = filtros.cargoIds.includes(cargoId);
     const novosFiltros = {
       ...filtros,
@@ -133,50 +90,69 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     onFiltroChange(novosFiltros);
   };
 
-  // Fechar dropdown quando clicar fora OU quando rolar a página
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Verificar se clicou em algum dos botões
-      const clicouNoCandidatos = candidatosButtonRef.current?.contains(event.target);
-      const clicouNosCargos = cargosButtonRef.current?.contains(event.target);
-      
-      // Verificar se clicou dentro do dropdown
-      const clicouNoDropdown = event.target.closest('.dropdown-portal');
-      
-      if (!clicouNoCandidatos && !clicouNosCargos && !clicouNoDropdown) {
-        setDropdownAberto({ candidatos: false, cargos: false });
-      }
+  const removerCandidato = (candidatoId) => {
+    const novosFiltros = {
+      ...filtros,
+      candidatoIds: filtros.candidatoIds.filter(id => id !== candidatoId)
     };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
 
-    // ✅ CORRIGIR - Só fechar se o scroll NÃO for dentro do dropdown
-    const handleScroll = (event) => {
-      // Verificar se o scroll está acontecendo dentro do dropdown
-      const scrollDentroDoDropdown = event.target.closest('.dropdown-portal');
-      
-      // Só fechar se o scroll não for dentro do dropdown
-      if (!scrollDentroDoDropdown) {
-        setDropdownAberto({ candidatos: false, cargos: false });
-      }
+  const removerCargo = (cargoId) => {
+    const novosFiltros = {
+      ...filtros,
+      cargoIds: filtros.cargoIds.filter(id => id !== cargoId)
     };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
 
-    // ✅ NOVO - Fechar dropdown quando redimensionar a janela
-    const handleResize = () => {
-      setDropdownAberto({ candidatos: false, cargos: false });
-    };
+  const selecionarTodosCandidatos = () => {
+    const todosCandidatos = opcoes.candidatos.map(c => c.id);
+    const novosFiltros = { ...filtros, candidatoIds: todosCandidatos };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
 
-    // Adicionar listeners apenas se algum dropdown estiver aberto
-    if (dropdownAberto.candidatos || dropdownAberto.cargos) {
-      document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', handleScroll, true); // true = capture phase
-      window.addEventListener('resize', handleResize);
-    }
+  const limparCandidatos = () => {
+    const novosFiltros = { ...filtros, candidatoIds: [] };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [dropdownAberto]);
+  const selecionarTodosCargos = () => {
+    const todosCargos = opcoes.cargos.map(c => c.id);
+    const novosFiltros = { ...filtros, cargoIds: todosCargos };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
+
+  const limparCargos = () => {
+    const novosFiltros = { ...filtros, cargoIds: [] };
+    setFiltros(novosFiltros);
+    onFiltroChange(novosFiltros);
+  };
+
+  // Filtrar candidatos pela busca
+  const candidatosFiltrados = opcoes.candidatos.filter(candidato =>
+    candidato.nome.toLowerCase().includes(buscaCandidatos.toLowerCase()) ||
+    candidato.cargo?.nome.toLowerCase().includes(buscaCandidatos.toLowerCase())
+  );
+
+  // Filtrar cargos pela busca
+  const cargosFiltrados = opcoes.cargos.filter(cargo =>
+    cargo.nome.toLowerCase().includes(buscaCargos.toLowerCase()) ||
+    cargo.nivel.toLowerCase().includes(buscaCargos.toLowerCase())
+  );
+
+  // Obter dados dos selecionados
+  const candidatosSelecionados = opcoes.candidatos.filter(c => 
+    filtros.candidatoIds.includes(c.id)
+  );
+  const cargosSelecionados = opcoes.cargos.filter(c => 
+    filtros.cargoIds.includes(c.id)
+  );
 
   if (loading) {
     return (
@@ -189,37 +165,10 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     );
   }
 
-  const todosCandidatosSelecionados = filtros.candidatoIds.length === opcoes.candidatos.length;
-  const todosCargosSelecionados = filtros.cargoIds.length === opcoes.cargos.length;
-
-  // Componente Dropdown Portal com posição relativa ao botão
-  const DropdownPortal = ({ isOpen, children, tipo }) => {
-    if (!isOpen) return null;
-
-    const buttonRef = tipo === 'candidatos' ? candidatosButtonRef : cargosButtonRef;
-    
-    return createPortal(
-      <div
-        className="dropdown-portal absolute bg-white border border-slate-300 rounded-lg shadow-xl max-h-64 overflow-y-auto"
-        style={{
-          top: `${dropdownPosition.top}px`,
-          left: `${dropdownPosition.left}px`,
-          width: `${dropdownPosition.width}px`,
-          zIndex: 99999,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          position: 'fixed' // Manter fixo mas fechar no scroll
-        }}
-      >
-        {children}
-      </div>,
-      document.body
-    );
-  };
-
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 mb-6">
-      {/* Header dos Filtros */}
-      <div className="flex items-center space-x-2 mb-4">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 mb-6">
+      {/* Header */}
+      <div className="flex items-center space-x-2 mb-6">
         <Filter className="w-5 h-5 text-[#FF943A]" />
         <h3 className="text-lg font-semibold text-slate-700">Filtros</h3>
         <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs">
@@ -227,139 +176,229 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
         </span>
       </div>
 
-      {/* Dropdowns Customizados */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Dropdown Candidatos */}
-        <div className="relative">
-          <label className="flex items-center space-x-2 mb-2">
-            <Users className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-semibold text-slate-700">Candidatos</span>
-          </label>
-          
-          <button
-            ref={candidatosButtonRef}
-            onClick={() => abrirDropdown('candidatos')}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-left text-sm hover:border-slate-400 focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors flex items-center justify-between"
-          >
-            <span>
-              {todosCandidatosSelecionados ? 
-                'Todos os candidatos selecionados' : 
-                `${filtros.candidatoIds.length} candidatos selecionados`
-              }
-            </span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${dropdownAberto.candidatos ? 'rotate-180' : ''}`} />
-          </button>
-
-          <DropdownPortal isOpen={dropdownAberto.candidatos} tipo="candidatos">
-            <div
-              onClick={(e) => toggleCandidato('todos', e)}
-              className="flex items-center space-x-3 px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-slate-200"
-            >
-              <div className="flex items-center justify-center w-4 h-4">
-                {todosCandidatosSelecionados && <Check className="w-4 h-4 text-blue-600" />}
-              </div>
-              <span className="text-sm font-semibold text-blue-600">
-                Todos os candidatos ({opcoes.candidatos.length})
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Filtro Candidatos */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center space-x-2">
+              <Users className="w-4 h-4 text-blue-500" />
+              <span className="text-sm font-semibold text-slate-700">
+                Candidatos ({candidatosSelecionados.length}/{opcoes.candidatos.length})
               </span>
-            </div>
-            
-            {opcoes.candidatos.map((candidato) => (
-              <div
-                key={candidato.id}
-                onClick={(e) => toggleCandidato(candidato.id, e)}
-                className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+            </label>
+            <div className="flex space-x-2">
+              <button
+                onClick={selecionarTodosCandidatos}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
               >
-                <div className="flex items-center justify-center w-4 h-4">
-                  {filtros.candidatoIds.includes(candidato.id) && <Check className="w-4 h-4 text-blue-600" />}
-                </div>
-                <span className="text-sm flex-1">{candidato.nome}</span>
-                {candidato.cargo && (
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                    {candidato.cargo.nome}
-                  </span>
+                Todos
+              </button>
+              <button
+                onClick={limparCandidatos}
+                className="text-xs text-slate-600 hover:text-slate-800 font-medium"
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          {/* Tags dos Selecionados */}
+          {candidatosSelecionados.length > 0 && (
+            <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+              {candidatosSelecionados.map(candidato => (
+                <span
+                  key={candidato.id}
+                  className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full h-fit"
+                >
+                  {candidato.nome}
+                  <button
+                    onClick={() => removerCandidato(candidato.id)}
+                    className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Dropdown Candidatos - STYLE SELECT2 */}
+          <div className="relative" ref={candidatosRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar candidatos..."
+                value={buscaCandidatos}
+                onChange={(e) => setBuscaCandidatos(e.target.value)}
+                onFocus={() => setDropdownAberto({ ...dropdownAberto, candidatos: true })}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
+              />
+            </div>
+
+            {dropdownAberto.candidatos && (
+              <div 
+                className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
+                style={{ zIndex: 1000 }}
+              >
+                {candidatosFiltrados.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-slate-500">
+                    Nenhum candidato encontrado
+                  </div>
+                ) : (
+                  candidatosFiltrados.map(candidato => (
+                    <div
+                      key={candidato.id}
+                      onClick={() => toggleCandidato(candidato.id)}
+                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-center w-4 h-4">
+                        {filtros.candidatoIds.includes(candidato.id) && (
+                          <Check className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {candidato.nome}
+                        </div>
+                        {candidato.cargo && (
+                          <div className="text-xs text-slate-500">
+                            {candidato.cargo.nome} ({candidato.cargo.nivel})
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
-            ))}
-          </DropdownPortal>
+            )}
+          </div>
         </div>
 
-        {/* Dropdown Cargos */}
-        <div className="relative">
-          <label className="flex items-center space-x-2 mb-2">
-            <Briefcase className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-semibold text-slate-700">Cargos</span>
-          </label>
-          
-          <button
-            ref={cargosButtonRef}
-            onClick={() => abrirDropdown('cargos')}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-left text-sm hover:border-slate-400 focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors flex items-center justify-between"
-          >
-            <span>
-              {todosCargosSelecionados ? 
-                'Todos os cargos selecionados' : 
-                `${filtros.cargoIds.length} cargos selecionados`
-              }
-            </span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${dropdownAberto.cargos ? 'rotate-180' : ''}`} />
-          </button>
-
-          <DropdownPortal isOpen={dropdownAberto.cargos} tipo="cargos">
-            <div
-              onClick={(e) => toggleCargo('todos', e)}
-              className="flex items-center space-x-3 px-3 py-2 hover:bg-green-50 cursor-pointer border-b border-slate-200"
-            >
-              <div className="flex items-center justify-center w-4 h-4">
-                {todosCargosSelecionados && <Check className="w-4 h-4 text-green-600" />}
-              </div>
-              <span className="text-sm font-semibold text-green-600">
-                Todos os cargos ({opcoes.cargos.length})
+        {/* Filtro Cargos */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center space-x-2">
+              <Briefcase className="w-4 h-4 text-green-500" />
+              <span className="text-sm font-semibold text-slate-700">
+                Cargos ({cargosSelecionados.length}/{opcoes.cargos.length})
               </span>
-            </div>
-            
-            {opcoes.cargos.map((cargo) => (
-              <div
-                key={cargo.id}
-                onClick={(e) => toggleCargo(cargo.id, e)}
-                className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+            </label>
+            <div className="flex space-x-2">
+              <button
+                onClick={selecionarTodosCargos}
+                className="text-xs text-green-600 hover:text-green-800 font-medium"
               >
-                <div className="flex items-center justify-center w-4 h-4">
-                  {filtros.cargoIds.includes(cargo.id) && <Check className="w-4 h-4 text-green-600" />}
-                </div>
-                <span className="text-sm flex-1">{cargo.nome}</span>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                  {cargo.nivel}
+                Todos
+              </button>
+              <button
+                onClick={limparCargos}
+                className="text-xs text-slate-600 hover:text-slate-800 font-medium"
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          {/* Tags dos Selecionados */}
+          {cargosSelecionados.length > 0 && (
+            <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+              {cargosSelecionados.map(cargo => (
+                <span
+                  key={cargo.id}
+                  className="inline-flex items-center bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full h-fit"
+                >
+                  {cargo.nome}
+                  <button
+                    onClick={() => removerCargo(cargo.id)}
+                    className="ml-1 hover:bg-green-200 rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </span>
+              ))}
+            </div>
+          )}
+
+          {/* Dropdown Cargos - STYLE SELECT2 */}
+          <div className="relative" ref={cargosRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar cargos..."
+                value={buscaCargos}
+                onChange={(e) => setBuscaCargos(e.target.value)}
+                onFocus={() => setDropdownAberto({ ...dropdownAberto, cargos: true })}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
+              />
+            </div>
+
+            {dropdownAberto.cargos && (
+              <div 
+                className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
+                style={{ zIndex: 1000 }}
+              >
+                {cargosFiltrados.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-slate-500">
+                    Nenhum cargo encontrado
+                  </div>
+                ) : (
+                  cargosFiltrados.map(cargo => (
+                    <div
+                      key={cargo.id}
+                      onClick={() => toggleCargo(cargo.id)}
+                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-center w-4 h-4">
+                        {filtros.cargoIds.includes(cargo.id) && (
+                          <Check className="w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {cargo.nome}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {cargo.nivel}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ))}
-          </DropdownPortal>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Resumo Visual dos Filtros */}
-      <div className="mt-4 pt-4 border-t border-slate-200">
-        <div className="flex flex-wrap gap-2">
-          {filtros.candidatoIds.length === opcoes.candidatos.length ? (
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-              ✓ Todos os candidatos
-            </span>
-          ) : filtros.candidatoIds.length > 0 && (
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-              {filtros.candidatoIds.length} candidato{filtros.candidatoIds.length > 1 ? 's' : ''}
-            </span>
-          )}
-          
-          {filtros.cargoIds.length === opcoes.cargos.length ? (
-            <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-              ✓ Todos os cargos
-            </span>
-          ) : filtros.cargoIds.length > 0 && (
-            <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-              {filtros.cargoIds.length} cargo{filtros.cargoIds.length > 1 ? 's' : ''}
-            </span>
-          )}
+      {/* Resumo dos Filtros Aplicados */}
+      {(filtros.candidatoIds.length > 0 || filtros.cargoIds.length > 0) && (
+        <div className="mt-6 pt-4 border-t border-slate-200">
+          <div className="text-xs text-slate-600 mb-2">Filtros aplicados:</div>
+          <div className="flex flex-wrap gap-2">
+            {filtros.candidatoIds.length === opcoes.candidatos.length ? (
+              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                ✓ Todos os candidatos
+              </span>
+            ) : filtros.candidatoIds.length > 0 && (
+              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                {filtros.candidatoIds.length} candidato{filtros.candidatoIds.length > 1 ? 's' : ''}
+              </span>
+            )}
+            
+            {filtros.cargoIds.length === opcoes.cargos.length ? (
+              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                ✓ Todos os cargos
+              </span>
+            ) : filtros.cargoIds.length > 0 && (
+              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                {filtros.cargoIds.length} cargo{filtros.cargoIds.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

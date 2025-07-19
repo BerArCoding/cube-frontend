@@ -1,69 +1,173 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Input } from '../ui';
-import cargoService from '../../services/cargos.js';
 import { 
   User, 
   Image, 
   Briefcase, 
   MapPin, 
-  Vote, 
-  Target, 
-  TrendingUp, 
+  Vote,
   Instagram,
-  Search
+  Building,
+  Users,
+  ChevronDown,
+  Search,
+  X
 } from 'lucide-react';
 
 const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
   const [formData, setFormData] = useState({
     nome: '',
     foto: '',
-    cargoAtual: '',
+    cargoId: '',
+    macrorregiaoId: '',
     redutoOrigem: '',
     votosUltimaEleicao: '',
+    populacaoCidade: '',
+    votosValidos: '',
     cargoPretendido: '',
-    votosNecessarios: '',
-    pontuacaoViabilidade: '',
-    instagramHandle: ''
+    instagramHandle: '',
+    observacoes: '' // ✅ NOVO CAMPO
   });
 
   const [cargos, setCargos] = useState([]);
-  const [loadingCargos, setLoadingCargos] = useState(false);
+  const [macrorregioes, setMacrorregioes] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  // Estados para os selects customizados
+  const [cargoDropdownOpen, setCargoDropdownOpen] = useState(false);
   const [cargoSearch, setCargoSearch] = useState('');
-  const [showCargoSuggestions, setShowCargoSuggestions] = useState(false);
+  const [macrorregiaoDropdownOpen, setMacrorregiaoDropdownOpen] = useState(false);
+  const [macrorregiaoSearch, setMacrorregiaoSearch] = useState('');
+  const [cargoPretendidoDropdownOpen, setCargoPretendidoDropdownOpen] = useState(false);
+  const [cargoPretendidoSearch, setCargoPretendidoSearch] = useState('');
+
+  // Refs para os dropdowns
+  const cargoDropdownRef = useRef(null);
+  const macrorregiaoDropdownRef = useRef(null);
+  const cargoPretendidoDropdownRef = useRef(null);
 
   // Carregar dados iniciais quando for edição
   useEffect(() => {
     if (initialData) {
+      console.log('📥 Dados iniciais recebidos:', initialData);
+      
       setFormData({
         nome: initialData.nome || '',
         foto: initialData.foto || '',
-        cargoAtual: initialData.cargoAtual || '',
+        cargoId: initialData.cargoId || '',
+        macrorregiaoId: initialData.macrorregiaoId || '',
         redutoOrigem: initialData.redutoOrigem || '',
         votosUltimaEleicao: initialData.votosUltimaEleicao?.toString() || '',
+        populacaoCidade: initialData.populacaoCidade?.toString() || '',
+        votosValidos: initialData.votosValidos?.toString() || '',
         cargoPretendido: initialData.cargoPretendido || '',
-        votosNecessarios: initialData.votosNecessarios?.toString() || '',
-        pontuacaoViabilidade: initialData.pontuacaoViabilidade?.toString() || '',
-        instagramHandle: initialData.instagramHandle || ''
+        instagramHandle: initialData.instagramHandle || '',
+        observacoes: initialData.observacoes || '' // ✅ NOVO CAMPO
       });
     }
   }, [initialData]);
 
-  // Carregar cargos do banco
+  // Função para fazer requests diretas
+  const makeRequest = async (url) => {
+    const token = localStorage.getItem('cube_token');
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  // Carregar cargos e macrorregiões
   useEffect(() => {
-    const loadCargos = async () => {
-      setLoadingCargos(true);
+    const loadOptions = async () => {
+      setLoadingOptions(true);
+      
       try {
-        const response = await cargoService.getAllCargos();
-        setCargos(response.data || []);
+        console.log('🔄 Iniciando carregamento de opções...');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        
+        const [cargosResponse, macrorregiaoResponse] = await Promise.all([
+          makeRequest(`${API_URL}/api/cargos`),
+          makeRequest(`${API_URL}/api/macrorregioes`)
+        ]);
+
+        console.log('📊 Resposta cargos:', cargosResponse);
+        console.log('🗺️ Resposta macrorregiões:', macrorregiaoResponse);
+
+        if (cargosResponse.success && Array.isArray(cargosResponse.data)) {
+          setCargos(cargosResponse.data);
+          console.log('✅ Cargos carregados:', cargosResponse.data.length);
+        } else {
+          console.error('❌ Estrutura inválida dos cargos:', cargosResponse);
+          setCargos([]);
+        }
+
+        if (macrorregiaoResponse.success && Array.isArray(macrorregiaoResponse.data)) {
+          setMacrorregioes(macrorregiaoResponse.data);
+          console.log('✅ Macrorregiões carregadas:', macrorregiaoResponse.data.length);
+        } else {
+          console.error('❌ Estrutura inválida das macrorregiões:', macrorregiaoResponse);
+          setMacrorregioes([]);
+        }
+
       } catch (error) {
-        console.error('Erro ao carregar cargos:', error);
-        setCargos([]);
+        console.error('❌ Erro ao carregar opções:', error);
+        
+        // Fallback com dados mock
+        console.log('🔄 Usando dados mock...');
+        setCargos([
+          { id: '1', nome: 'Vereador', nivel: 'MUNICIPAL', descricao: 'Membro da Câmara Municipal' },
+          { id: '2', nome: 'Prefeito', nivel: 'MUNICIPAL', descricao: 'Chefe do Poder Executivo Municipal' },
+          { id: '3', nome: 'Deputado Estadual', nivel: 'ESTADUAL', descricao: 'Membro da Assembleia Legislativa' },
+          { id: '4', nome: 'Deputado Federal', nivel: 'FEDERAL', descricao: 'Membro da Câmara dos Deputados' },
+          { id: '5', nome: 'Senador', nivel: 'FEDERAL', descricao: 'Membro do Senado Federal' },
+          { id: '6', nome: 'Governador', nivel: 'ESTADUAL', descricao: 'Chefe do Poder Executivo Estadual' }
+        ]);
+        
+        setMacrorregioes([
+          { id: '1', nome: 'Noroeste' },
+          { id: '2', nome: 'Norte' },
+          { id: '3', nome: 'Centro e Centro-Sul' },
+          { id: '4', nome: 'Oeste' },
+          { id: '5', nome: 'Vales do Iguaçu' },
+          { id: '6', nome: 'Campos Gerais' },
+          { id: '7', nome: 'Grande Curitiba' }
+        ]);
       } finally {
-        setLoadingCargos(false);
+        setLoadingOptions(false);
       }
     };
 
-    loadCargos();
+    loadOptions();
+  }, []);
+
+  // Fechar dropdowns quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cargoDropdownRef.current && !cargoDropdownRef.current.contains(event.target)) {
+        setCargoDropdownOpen(false);
+        setCargoSearch('');
+      }
+      if (macrorregiaoDropdownRef.current && !macrorregiaoDropdownRef.current.contains(event.target)) {
+        setMacrorregiaoDropdownOpen(false);
+        setMacrorregiaoSearch('');
+      }
+      if (cargoPretendidoDropdownRef.current && !cargoPretendidoDropdownRef.current.contains(event.target)) {
+        setCargoPretendidoDropdownOpen(false);
+        setCargoPretendidoSearch('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleInputChange = (field) => (e) => {
@@ -72,21 +176,6 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       ...prev,
       [field]: value
     }));
-
-    // Para campos de cargo, mostrar sugestões
-    if (field === 'cargoAtual' || field === 'cargoPretendido') {
-      setCargoSearch(value);
-      setShowCargoSuggestions(value.length > 0);
-    }
-  };
-
-  const handleCargoSelect = (field, cargoNome) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: cargoNome
-    }));
-    setShowCargoSuggestions(false);
-    setCargoSearch('');
   };
 
   const handleSubmit = async (e) => {
@@ -97,93 +186,57 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       return;
     }
 
+    // ✅ LIMPAR @ do Instagram
+    const cleanInstagram = formData.instagramHandle?.trim().replace(/^@+/, '') || null;
+
     // Preparar dados para envio
     const candidateData = {
       nome: formData.nome.trim(),
       foto: formData.foto.trim() || null,
-      cargoAtual: formData.cargoAtual.trim() || null,
+      cargoId: formData.cargoId || null,
+      macrorregiaoId: formData.macrorregiaoId || null,
       redutoOrigem: formData.redutoOrigem.trim() || null,
       votosUltimaEleicao: formData.votosUltimaEleicao ? parseInt(formData.votosUltimaEleicao) : null,
+      populacaoCidade: formData.populacaoCidade ? parseInt(formData.populacaoCidade) : null,
+      votosValidos: formData.votosValidos ? parseInt(formData.votosValidos) : null,
       cargoPretendido: formData.cargoPretendido.trim() || null,
-      votosNecessarios: formData.votosNecessarios ? parseInt(formData.votosNecessarios) : null,
-      pontuacaoViabilidade: formData.pontuacaoViabilidade ? parseFloat(formData.pontuacaoViabilidade) : null,
-      instagramHandle: formData.instagramHandle.trim() || null
+      instagramHandle: cleanInstagram, // ✅ USANDO VERSÃO LIMPA
+      observacoes: formData.observacoes.trim() || null // ✅ NOVO CAMPO
     };
+
+    console.log('📤 Enviando dados:', candidateData);
 
     await onSubmit(candidateData);
   };
 
-  // Filtrar cargos para sugestões
-  const filteredCargos = cargos.filter(cargo =>
-    cargo.nome?.toLowerCase().includes(cargoSearch.toLowerCase())
-  ).slice(0, 5);
-
-  const renderCargoInput = (field, label, placeholder) => {
-    const value = formData[field];
-    const isSearching = (field === 'cargoAtual' || field === 'cargoPretendido') && 
-                       showCargoSuggestions && 
-                       cargoSearch === value;
-
+  // Filtrar opções baseado na busca
+  const filteredCargos = cargos.filter(cargo => {
+    if (!cargoSearch) return true;
+    const searchText = cargoSearch.toLowerCase();
     return (
-      <div className="relative">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          {label}
-        </label>
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder={placeholder}
-            value={value}
-            onChange={handleInputChange(field)}
-            icon={Briefcase}
-            onFocus={() => {
-              if (field === 'cargoAtual' || field === 'cargoPretendido') {
-                setCargoSearch(value);
-                setShowCargoSuggestions(true);
-              }
-            }}
-          />
-          
-          {/* Sugestões de cargos */}
-          {isSearching && filteredCargos.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {filteredCargos.map((cargo, index) => (
-                <button
-                  key={cargo.id || index}
-                  type="button"
-                  onClick={() => handleCargoSelect(field, cargo.nome)}
-                  className="w-full px-3 py-2 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex items-center space-x-2"
-                >
-                  <Briefcase className="h-4 w-4 text-slate-400" />
-                  <div>
-                    <div className="text-sm font-medium text-slate-900">{cargo.nome}</div>
-                    {cargo.nivel && (
-                      <div className="text-xs text-slate-500">{cargo.nivel}</div>
-                    )}
-                  </div>
-                </button>
-              ))}
-              
-              {/* Opção para criar novo cargo */}
-              <button
-                type="button"
-                onClick={() => handleCargoSelect(field, cargoSearch)}
-                className="w-full px-3 py-2 text-left hover:bg-orange-50 border-t border-slate-200 flex items-center space-x-2"
-              >
-                <Search className="h-4 w-4 text-orange-500" />
-                <div>
-                  <div className="text-sm font-medium text-orange-900">
-                    Usar "{cargoSearch}"
-                  </div>
-                  <div className="text-xs text-orange-600">Será criado automaticamente</div>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      cargo.nome?.toLowerCase().includes(searchText) ||
+      cargo.nivel?.toLowerCase().includes(searchText) ||
+      cargo.descricao?.toLowerCase().includes(searchText)
     );
-  };
+  });
+
+  const filteredMacrorregioes = macrorregioes.filter(macro => {
+    if (!macrorregiaoSearch) return true;
+    return macro.nome?.toLowerCase().includes(macrorregiaoSearch.toLowerCase());
+  });
+
+  const filteredCargosPretendido = cargos.filter(cargo => {
+    if (!cargoPretendidoSearch) return true;
+    const searchText = cargoPretendidoSearch.toLowerCase();
+    return (
+      cargo.nome?.toLowerCase().includes(searchText) ||
+      cargo.nivel?.toLowerCase().includes(searchText)
+    );
+  });
+
+  // Encontrar dados selecionados
+  const selectedCargo = cargos.find(cargo => cargo.id === formData.cargoId);
+  const selectedMacrorregiao = macrorregioes.find(macro => macro.id === formData.macrorregiaoId);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -228,26 +281,300 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         )}
       </div>
 
-      {/* Cargo Atual */}
-      {renderCargoInput('cargoAtual', 'Cargo Atual', 'Ex: Vereador, Deputado...')}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* ✅ Select Customizado - Cargo Atual */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Cargo Atual
+          </label>
+          <div className="relative" ref={cargoDropdownRef}>
+            {/* Input Principal */}
+            <div
+              onClick={() => !loadingOptions && setCargoDropdownOpen(!cargoDropdownOpen)}
+              className={`
+                w-full px-3 py-2 border rounded-lg cursor-pointer transition-colors
+                ${cargoDropdownOpen 
+                  ? 'ring-2 ring-orange-500 border-transparent' 
+                  : 'border-slate-300 hover:border-slate-400'
+                }
+                ${loadingOptions ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}
+                flex items-center justify-between
+              `}
+            >
+              <div className="flex-1 min-w-0">
+                {selectedCargo ? (
+                  <span className="text-slate-900">
+                    {selectedCargo.nome} <span className="text-slate-500">({selectedCargo.nivel})</span>
+                  </span>
+                ) : (
+                  <span className="text-slate-500">
+                    {loadingOptions ? 'Carregando cargos...' : 'Selecione ou busque um cargo'}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {selectedCargo && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFormData(prev => ({ ...prev, cargoId: '' }));
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded transition-colors"
+                  >
+                    <X className="h-3 w-3 text-slate-400" />
+                  </button>
+                )}
+                <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${cargoDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
 
-      {/* Reduto de Origem */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          Reduto de Origem
-        </label>
-        <Input
-          type="text"
-          placeholder="Ex: São Paulo - SP, Rio de Janeiro - RJ..."
-          value={formData.redutoOrigem}
-          onChange={handleInputChange('redutoOrigem')}
-          icon={MapPin}
-        />
+            {/* Dropdown */}
+            {cargoDropdownOpen && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                {/* Campo de busca */}
+                <div className="p-2 border-b border-slate-200">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Digite o nome do cargo..."
+                      value={cargoSearch}
+                      onChange={(e) => setCargoSearch(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Lista de opções */}
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredCargos.length > 0 ? (
+                    filteredCargos.map((cargo) => (
+                      <div
+                        key={cargo.id}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, cargoId: cargo.id }));
+                          setCargoDropdownOpen(false);
+                          setCargoSearch('');
+                        }}
+                        className={`
+                          px-3 py-2 cursor-pointer transition-colors border-b border-slate-100 last:border-b-0
+                          ${formData.cargoId === cargo.id 
+                            ? 'bg-orange-50 text-orange-900' 
+                            : 'hover:bg-slate-50'
+                          }
+                        `}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{cargo.nome}</span>
+                          <span className="text-xs text-slate-500">{cargo.nivel}</span>
+                          {cargo.descricao && (
+                            <span className="text-xs text-slate-400 truncate">{cargo.descricao}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-center text-slate-500 text-sm">
+                      {cargoSearch ? `Nenhum resultado para "${cargoSearch}"` : 'Nenhum cargo disponível'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
+            {cargos.length} cargos disponíveis
+          </div>
+        </div>
+
+        {/* ✅ Select Customizado - Macrorregião */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Macrorregião
+          </label>
+          <div className="relative" ref={macrorregiaoDropdownRef}>
+            {/* Input Principal */}
+            <div
+              onClick={() => !loadingOptions && setMacrorregiaoDropdownOpen(!macrorregiaoDropdownOpen)}
+              className={`
+                w-full px-3 py-2 border rounded-lg cursor-pointer transition-colors
+                ${macrorregiaoDropdownOpen 
+                  ? 'ring-2 ring-orange-500 border-transparent' 
+                  : 'border-slate-300 hover:border-slate-400'
+                }
+                ${loadingOptions ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}
+                flex items-center justify-between
+              `}
+            >
+              <div className="flex-1 min-w-0">
+                {selectedMacrorregiao ? (
+                  <span className="text-slate-900">📍 {selectedMacrorregiao.nome}</span>
+                ) : (
+                  <span className="text-slate-500">
+                    {loadingOptions ? 'Carregando regiões...' : 'Selecione ou busque uma região'}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {selectedMacrorregiao && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFormData(prev => ({ ...prev, macrorregiaoId: '' }));
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded transition-colors"
+                  >
+                    <X className="h-3 w-3 text-slate-400" />
+                  </button>
+                )}
+                <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${macrorregiaoDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+
+            {/* Dropdown */}
+            {macrorregiaoDropdownOpen && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                {/* Campo de busca */}
+                <div className="p-2 border-b border-slate-200">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Digite o nome da região..."
+                      value={macrorregiaoSearch}
+                      onChange={(e) => setMacrorregiaoSearch(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Lista de opções */}
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredMacrorregioes.length > 0 ? (
+                    filteredMacrorregioes.map((macro) => (
+                      <div
+                        key={macro.id}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, macrorregiaoId: macro.id }));
+                          setMacrorregiaoDropdownOpen(false);
+                          setMacrorregiaoSearch('');
+                        }}
+                        className={`
+                          px-3 py-2 cursor-pointer transition-colors border-b border-slate-100 last:border-b-0
+                          ${formData.macrorregiaoId === macro.id 
+                            ? 'bg-orange-50 text-orange-900' 
+                            : 'hover:bg-slate-50'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center">
+                          <span className="mr-2">📍</span>
+                          <span className="font-medium">{macro.nome}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-center text-slate-500 text-sm">
+                      {macrorregiaoSearch ? `Nenhum resultado para "${macrorregiaoSearch}"` : 'Nenhuma região disponível'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
+            {macrorregioes.length} regiões disponíveis
+          </div>
+        </div>
       </div>
 
-      {/* Grid com 2 colunas */}
+      {/* ✅ Cargo Pretendido com Select Customizado + Reduto */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Votos Última Eleição */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Cargo Pretendido
+          </label>
+          <div className="relative" ref={cargoPretendidoDropdownRef}>
+            {/* Input com busca */}
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Ex: Deputado Federal, Governador..."
+                value={formData.cargoPretendido}
+                onChange={handleInputChange('cargoPretendido')}
+                onFocus={() => setCargoPretendidoDropdownOpen(true)}
+                onInput={(e) => {
+                  setCargoPretendidoSearch(e.target.value);
+                  setCargoPretendidoDropdownOpen(true);
+                }}
+                icon={Briefcase}
+              />
+              <button
+                type="button"
+                onClick={() => setCargoPretendidoDropdownOpen(!cargoPretendidoDropdownOpen)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <ChevronDown className={`h-4 w-4 transition-transform ${cargoPretendidoDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Dropdown de sugestões */}
+            {cargoPretendidoDropdownOpen && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-48 overflow-hidden">
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredCargosPretendido.length > 0 ? (
+                    filteredCargosPretendido.map((cargo) => (
+                      <div
+                        key={cargo.id}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, cargoPretendido: cargo.nome }));
+                          setCargoPretendidoDropdownOpen(false);
+                          setCargoPretendidoSearch('');
+                        }}
+                        className="px-3 py-2 cursor-pointer transition-colors border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{cargo.nome}</span>
+                          <span className="text-xs text-slate-500">{cargo.nivel}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-center text-slate-500 text-sm">
+                      Digite livremente ou escolha das sugestões
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
+            💡 Digite livremente ou escolha das sugestões dos cargos cadastrados
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Reduto de Origem
+          </label>
+          <Input
+            type="text"
+            placeholder="Ex: São Paulo - SP, Rio de Janeiro - RJ..."
+            value={formData.redutoOrigem}
+            onChange={handleInputChange('redutoOrigem')}
+            icon={MapPin}
+          />
+        </div>
+      </div>
+
+      {/* Dados Eleitorais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Votos Última Eleição
@@ -262,56 +589,66 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
           />
         </div>
 
-        {/* Votos Necessários */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Votos Necessários
+            População da Cidade
           </label>
           <Input
             type="number"
-            placeholder="Ex: 25000"
-            value={formData.votosNecessarios}
-            onChange={handleInputChange('votosNecessarios')}
-            icon={Target}
+            placeholder="Ex: 50000"
+            value={formData.populacaoCidade}
+            onChange={handleInputChange('populacaoCidade')}
+            icon={Users}
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Votos Válidos
+          </label>
+          <Input
+            type="number"
+            placeholder="Ex: 35000"
+            value={formData.votosValidos}
+            onChange={handleInputChange('votosValidos')}
+            icon={Building}
             min="0"
           />
         </div>
       </div>
 
-      {/* Cargo Pretendido */}
-      {renderCargoInput('cargoPretendido', 'Cargo Pretendido', 'Digite o cargo pretendido...')}
-
-      {/* Grid com 2 colunas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Pontuação Viabilidade */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Pontuação de Viabilidade (0-10)
-          </label>
-          <Input
-            type="number"
-            placeholder="Ex: 7.5"
-            value={formData.pontuacaoViabilidade}
-            onChange={handleInputChange('pontuacaoViabilidade')}
-            icon={TrendingUp}
-            min="0"
-            max="10"
-            step="0.1"
-          />
+      {/* Instagram */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Instagram
+        </label>
+        <Input
+          type="text"
+          placeholder="@usuario ou usuario"
+          value={formData.instagramHandle}
+          onChange={handleInputChange('instagramHandle')}
+          icon={Instagram}
+        />
+        <div className="text-xs text-slate-500 mt-1">
+          💡 O @ será removido automaticamente ao salvar
         </div>
+      </div>
 
-        {/* Instagram Handle */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Instagram
-          </label>
-          <Input
-            type="text"
-            placeholder="@usuario ou usuario"
-            value={formData.instagramHandle}
-            onChange={handleInputChange('instagramHandle')}
-            icon={Instagram}
-          />
+      {/* ✅ NOVO - Campo de Observações */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Observações
+        </label>
+        <textarea
+          placeholder="Observações adicionais sobre o candidato..."
+          value={formData.observacoes}
+          onChange={handleInputChange('observacoes')}
+          rows={4}
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-vertical"
+        />
+        <div className="text-xs text-slate-500 mt-1">
+          Informações complementares, notas ou comentários sobre o candidato
         </div>
       </div>
 
@@ -328,18 +665,22 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
           type="submit"
           loading={isLoading}
           className="bg-orange-500 hover:bg-orange-600"
+          disabled={loadingOptions}
         >
           {initialData ? 'Atualizar Candidato' : 'Cadastrar Candidato'}
         </Button>
       </div>
 
-      {/* Loading de cargos */}
-      {loadingCargos && (
-        <div className="text-xs text-slate-500 flex items-center">
-          <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-500 mr-1"></div>
-          Carregando cargos do banco...
+      {/* Loading indicator */}
+      {loadingOptions && (
+        <div className="text-center py-4">
+          <div className="inline-flex items-center text-sm text-slate-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mr-2"></div>
+            Carregando opções de cargos e regiões...
+          </div>
         </div>
       )}
+
     </form>
   );
 };

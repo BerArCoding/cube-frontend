@@ -115,8 +115,8 @@ const Dashboard = () => {
     { id: 'geral', label: 'Visão Geral', icon: BarChart3 },
     { id: 'redes', label: 'Redes Sociais', icon: Activity },
     { id: 'viabilidade', label: 'Viabilidade', icon: Target },
-    { id: 'palavras', label: 'Nuvem de Palavras', icon: MessageSquare },
-    { id: 'avancado', label: 'Métricas Avançadas', icon: TrendingUp }
+    { id: 'palavras', label: 'Nuvem de Palavras', icon: MessageSquare }
+    // { id: 'avancado', label: 'Métricas Avançadas', icon: TrendingUp }
   ];
 
   if (loading && !dados && !filtrosCarregados) {
@@ -179,7 +179,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={`mb-8 ${styles.animateSlideUp} overflow-visible`} style={{ animationDelay: '0.05s' }}>
+        <div className={`mb-8 ${styles.animateSlideUp} relative z-50`} style={{ animationDelay: '0.05s', minHeight: '300px' }}>
           <FiltrosDashboard onFiltroChange={handleFiltroChange} />
         </div>
 

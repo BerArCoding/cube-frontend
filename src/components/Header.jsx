@@ -43,7 +43,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
   }, []);
 
   return (
-    <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+    <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-[9999] backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo e Título - AGORA COM LINK */}
@@ -110,7 +110,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-fade-in">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-[10000] animate-fade-in">
                   {/* User Info */}
                   <div className="px-6 py-4 border-b border-slate-100">
                     <div className="flex items-center space-x-3">

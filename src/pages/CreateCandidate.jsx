@@ -92,7 +92,7 @@ const CreateCandidate = () => {
         </div>
 
         {/* Dicas */}
-        <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+        {/* <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
           <h3 className="text-sm font-medium text-blue-900 mb-2">💡 Dicas</h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Para cargos, digite e o sistema buscará na base de dados ou criará novos</li>
@@ -101,7 +101,7 @@ const CreateCandidate = () => {
             <li>• Reduto de origem pode ser cidade, região ou estado</li>
             <li>• Todos os campos são opcionais, exceto o nome</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Debug Info - remover em produção */}
         {/* {import.meta.env.DEV && (

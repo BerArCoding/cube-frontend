@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Filter, Users, Briefcase, Check, ChevronDown } from 'lucide-react';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const FiltrosDashboard = ({ onFiltroChange }) => {
   const [filtros, setFiltros] = useState({
@@ -26,7 +27,7 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
 
   const carregarOpcoesFiltros = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/dashboard/filtros');
+      const response = await fetch(`${API_BASE}/api/dashboard/filtros`);
       const result = await response.json();
       
       if (result.sucesso) {

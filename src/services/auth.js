@@ -4,7 +4,7 @@ export const authAPI = {
   // Login do usuário
   login: async (credentials) => {
     try {
-      console.log('Fazendo login para:', API_BASE_URL);
+      
       
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',

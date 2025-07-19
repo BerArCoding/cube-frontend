@@ -5,6 +5,8 @@ import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute.jsx';
 // Importar páginas
 import Login from '../pages/Login.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
+import RSSFeed from '../pages/RSSFeed.jsx';
+import Configuracoes from '../pages/Configuracoes.jsx';
 import CandidatesList from '../pages/CandidatesList.jsx';
 import CreateCandidate from '../pages/CreateCandidate.jsx';
 import EditCandidate from '../pages/EditCandidate.jsx';
@@ -36,6 +38,24 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/rss-feed" 
+            element={
+              <ProtectedRoute>
+                <RSSFeed />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/configuracoes" 
+            element={
+              <ProtectedRoute>
+                <Configuracoes />
               </ProtectedRoute>
             } 
           />

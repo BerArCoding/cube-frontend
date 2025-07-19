@@ -1,17 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth.jsx';
-import { useNavigate } from 'react-router-dom';
-import { Button, CubeLogo } from './ui';
-import { 
-  User, 
-  ChevronDown, 
-  LogOut, 
-  Shield, 
-  Settings,
-  Menu,
-  X,
-  Users
-} from 'lucide-react';
+// ... (imports continuam iguais)
 
 const Header = ({ title = "CUBE Dashboard" }) => {
   const { user, logout, isAdmin } = useAuth();
@@ -27,10 +14,9 @@ const Header = ({ title = "CUBE Dashboard" }) => {
 
   const handleLogoClick = () => {
     navigate('/dashboard');
-    setIsMobileMenuOpen(false); // Fechar menu mobile se estiver aberto
+    setIsMobileMenuOpen(false);
   };
 
-  // Fechar dropdown quando clicar fora
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -46,7 +32,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
     <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo e Título - AGORA COM LINK */}
+          {/* Logo e Título */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
               <button
@@ -60,7 +46,6 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                 <button
                   onClick={handleLogoClick}
                   className="text-xl font-bold text-slate-800 tracking-tight hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                  title="Voltar ao Dashboard"
                 >
                   {title}
                 </button>
@@ -70,13 +55,11 @@ const Header = ({ title = "CUBE Dashboard" }) => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* User Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center space-x-3 bg-slate-50 hover:bg-slate-100 rounded-xl px-3 py-2 border border-slate-200 transition-all duration-200 hover:shadow-md"
+                className="flex items-center space-x-3 bg-slate-50 hover:bg-slate-100 rounded-xl px-3 py-2 border border-slate-200 transition-all"
               >
-                {/* Avatar */}
                 <div className="relative">
                   <div className="h-8 w-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm">
                     {user?.nome?.charAt(0)?.toUpperCase() || 'U'}
@@ -88,7 +71,6 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                   )}
                 </div>
 
-                {/* User Info */}
                 <div className="text-left">
                   <p className="text-sm font-medium text-slate-700 truncate max-w-32">
                     {user?.nome || 'Usuário'}
@@ -108,10 +90,9 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                 <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Dropdown */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-fade-in">
-                  {/* User Info */}
                   <div className="px-6 py-4 border-b border-slate-100">
                     <div className="flex items-center space-x-3">
                       <div className="relative">
@@ -137,10 +118,9 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                     </div>
                   </div>
 
-                  {/* Menu Items */}
                   <div className="py-2">
                     <button className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
-                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200">
                         <User className="h-4 w-4" />
                       </div>
                       <div className="text-left">
@@ -148,6 +128,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Editar informações pessoais</p>
                       </div>
                     </button>
+
                     {isAdmin() && (
                       <button 
                         onClick={() => {
@@ -156,7 +137,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         }}
                         className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
                       >
-                        <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                        <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200">
                           <Users className="h-4 w-4" />
                         </div>
                         <div className="text-left">
@@ -165,8 +146,15 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         </div>
                       </button>
                     )}
-                    <button className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
-                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
+
+                    <button 
+                      onClick={() => {
+                        navigate('/configuracoes');
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200">
                         <Settings className="h-4 w-4" />
                       </div>
                       <div className="text-left">
@@ -174,15 +162,32 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Preferências do sistema</p>
                       </div>
                     </button>
+
+                    <button 
+                      onClick={() => {
+                        navigate('/rss-feed');
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <span className="font-medium">RSS Feed</span>
+                        <p className="text-xs text-slate-500">Últimas notícias</p>
+                      </div>
+                    </button>
                   </div>
 
-                  {/* Logout */}
                   <div className="border-t border-slate-100 pt-2">
                     <button
                       onClick={handleLogout}
                       className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors group"
                     >
-                      <div className="p-1 rounded-md bg-red-100 group-hover:bg-red-200 transition-colors">
+                      <div className="p-1 rounded-md bg-red-100 group-hover:bg-red-200">
                         <LogOut className="h-4 w-4" />
                       </div>
                       <div className="text-left">
@@ -196,7 +201,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -212,18 +217,15 @@ const Header = ({ title = "CUBE Dashboard" }) => {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white">
           <div className="px-4 py-4 space-y-3">
-            {/* Mobile Title - AGORA COM LINK */}
             <div className="lg:hidden">
               <button
                 onClick={handleLogoClick}
-                className="text-lg font-bold text-slate-800 hover:text-orange-600 transition-colors duration-200 cursor-pointer"
-                title="Voltar ao Dashboard"
+                className="text-lg font-bold text-slate-800 hover:text-orange-600 transition-colors duration-200"
               >
                 {title}
               </button>
             </div>
 
-            {/* User Info Mobile */}
             <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg">
               <div className="relative">
                 <div className="h-10 w-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-medium">
@@ -241,12 +243,12 @@ const Header = ({ title = "CUBE Dashboard" }) => {
               </div>
             </div>
 
-            {/* Mobile Actions */}
             <div className="space-y-2">
               <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
                 <User className="h-4 w-4" />
                 <span>Meu Perfil</span>
               </button>
+
               {isAdmin() && (
                 <button 
                   onClick={() => {
@@ -259,10 +261,31 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                   <span>Gerenciar Candidatos</span>
                 </button>
               )}
-              <button className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+
+              <button 
+                onClick={() => {
+                  navigate('/configuracoes');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
                 <Settings className="h-4 w-4" />
                 <span>Configurações</span>
               </button>
+
+              <button 
+                onClick={() => {
+                  navigate('/rss-feed');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+                <span>RSS Feed</span>
+              </button>
+
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-3 w-full p-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"

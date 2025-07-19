@@ -61,7 +61,7 @@ const Login = () => {
     setErrors({});
 
     try {
-      console.log('Tentando fazer login com:', { email: formData.email });
+      
       
       // Usar o hook de autenticação
       const result = await login({
@@ -70,7 +70,7 @@ const Login = () => {
       });
 
       if (result.success) {
-        console.log('Login realizado com sucesso:', result.user);
+        
         
         // Redirecionar para dashboard ou rota original
         navigate(from, { replace: true });

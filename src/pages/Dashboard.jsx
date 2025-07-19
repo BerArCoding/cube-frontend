@@ -21,6 +21,8 @@ import MetricasAvancadas from '../components/dashboard/MetricasAvancadas';
 import styles from '../styles/Dashboard.module.css';
 import FiltrosDashboard from '../components/dashboard/FiltrosDashboard';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 // pages/Dashboard.jsx - CORRIGIR o useEffect
 const Dashboard = () => {
   const [dados, setDados] = useState(null);
@@ -60,8 +62,8 @@ const Dashboard = () => {
       if (filtrosAtivos?.cargoIds?.length > 0) {
         params.append('cargos', filtrosAtivos.cargoIds.join(','));
       }
-      
-      const url = `http://localhost:3001/api/dashboard${params.toString() ? '?' + params.toString() : ''}`;
+
+      const url = `${API_BASE}/api/dashboard${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url);
       const result = await response.json();
       
@@ -83,7 +85,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:3001/api/dashboard');
+      const response = await fetch(`${API_BASE}/api/dashboard`);
       const result = await response.json();
       
       if (result.sucesso) {

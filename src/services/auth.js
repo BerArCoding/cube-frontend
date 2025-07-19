@@ -24,12 +24,12 @@ export const authAPI = {
       // Salvar token no localStorage
       if (data.token) {
         localStorage.setItem('cube_token', data.token);
-        localStorage.setItem('cube_user', JSON.stringify(data.usuario)); // ← LINHA 2: 'usuario' não 'user'
+        localStorage.setItem('cube_user', JSON.stringify(data.user)); // ← Corrigido para 'user'
       }
 
       return {
         token: data.token,
-        user: data.usuario  // ← LINHA 3: 'usuario' não 'user'
+        user: data.user // ← Corrigido para 'user'
       }
     } catch (error) {
       console.error('Erro no login:', error);

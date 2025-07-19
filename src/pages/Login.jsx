@@ -156,14 +156,6 @@ const Login = () => {
           </div>
 
           {/* Debug info - remover em produção */}
-          <div className="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600">
-            <p><strong>Para teste:</strong></p>
-            <p>Email: admin@cube.com</p>
-            <p>Senha: admin123</p>
-            <p className="mt-1 text-slate-500">
-              API: {import.meta.env.VITE_API_URL || 'http://localhost:3001'}
-            </p>
-          </div>
         </div>
 
         <div className="text-center">

@@ -52,44 +52,38 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) return;
 
-    setLoading(true);
-    setErrors({});
+  setLoading(true);
+  setErrors({});
 
-    try {
-      
-      
-      // Usar o hook de autenticação
-      const result = await login({
-        email: formData.email,
-        password: formData.password
-      });
+  try {
+    const result = await login({
+      email: formData.email,
+      senha: formData.password
+    });
 
-      if (result.success) {
-        
-        
-        // Redirecionar para dashboard ou rota original
-        navigate(from, { replace: true });
-      } else {
-        // Tratar erro do login
-        setErrors({ 
-          general: result.error || 'Erro ao fazer login. Tente novamente.' 
-        });
-      }
-      
-    } catch (error) {
-      console.error('Erro no login:', error);
+    if (result.success) {
+      console.log('✅ Login bem-sucedido:', result.user);
+      navigate(from, { replace: true });
+    } else {
       setErrors({ 
-        general: 'Erro inesperado. Tente novamente.' 
+        general: result.error || 'Erro ao fazer login. Tente novamente.' 
       });
-    } finally {
-      setLoading(false);
     }
-  };
+    
+  } catch (error) {
+    console.error('❌ Erro no login:', error);
+    setErrors({ 
+      general: 'Erro inesperado. Tente novamente.' 
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

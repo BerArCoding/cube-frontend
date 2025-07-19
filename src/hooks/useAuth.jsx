@@ -37,25 +37,30 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Função de login
-  const login = async (credentials) => {
-    try {
-      setLoading(true);
-      const response = await authAPI.login(credentials);
-      
-      if (response.user && response.token) {
-        setUser(response.user);
-        setIsAuthenticated(true);
-        return { success: true, user: response.user };
-      }
-      
-      throw new Error('Dados de login inválidos');
-    } catch (error) {
-      console.error('Erro no login:', error);
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
+// hooks/useAuth.jsx - SÓ ADICIONAR LOGS
+const login = async (credentials) => {
+  try {
+    console.log('🔍 Tentando login...'); // ← ADICIONAR LOG
+    setLoading(true);
+    const response = await authAPI.login(credentials);
+    
+    console.log('🔍 Resposta authAPI:', response); // ← ADICIONAR LOG
+    
+    if (response.user && response.token) {
+      setUser(response.user);
+      setIsAuthenticated(true);
+      console.log('✅ Login sucesso!'); // ← ADICIONAR LOG
+      return { success: true, user: response.user };
     }
-  };
+    
+    throw new Error('Dados de login inválidos');
+  } catch (error) {
+    console.error('❌ Erro no login:', error);
+    return { success: false, error: error.message };
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Função de logout
   const logout = () => {

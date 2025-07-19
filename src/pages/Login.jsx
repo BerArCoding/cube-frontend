@@ -63,8 +63,10 @@ const handleSubmit = async (e) => {
   try {
     const result = await login({
       email: formData.email,
-      senha: formData.password
+      password: formData.password
     });
+
+    console.log('🔍 Tentando login com:', formData);
 
     if (result.success) {
       console.log('✅ Login bem-sucedido:', result.user);

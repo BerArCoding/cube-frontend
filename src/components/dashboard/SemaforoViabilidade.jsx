@@ -21,7 +21,7 @@ const SemaforoViabilidade = ({ dados }) => {
     },
     { 
       key: 'risco', 
-      label: 'Zona de Risco', 
+      label: 'Risco', 
       color: 'bg-orange-500', 
       textColor: 'text-orange-700',
       bgLight: 'bg-orange-50'

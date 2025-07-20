@@ -133,7 +133,27 @@ const RSSFeed = () => {
         const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
         const creator = item.querySelector('dc\\:creator, creator')?.textContent || 'RSS.APP';
         const category = item.querySelector('category')?.textContent || 'RSS Feed';
-        
+
+        // Busca <media:content> manualmente, pois querySelector pode falhar com namespaces
+        let linkImagem = '';
+        const mediaContentEls = item.getElementsByTagName('media:content');
+        if (mediaContentEls.length > 0) {
+          linkImagem = mediaContentEls[0].getAttribute('url') || '';
+        } else {
+          // fallback para <media:thumbnail>
+          const mediaThumbEls = item.getElementsByTagName('media:thumbnail');
+          if (mediaThumbEls.length > 0) {
+        linkImagem = mediaThumbEls[0].getAttribute('url') || '';
+          }
+        }
+
+        // fallback: tenta pegar <img src=...> do description
+        if (!linkImagem && description) {
+          const imgMatch = description.match(/<img[^>]+src="([^">]+)"/i);
+          if (imgMatch && imgMatch[1]) {
+        linkImagem = imgMatch[1];
+          }
+        }
         return {
           guid: `rssapp-${Date.now()}-${index}`,
           title: title.trim(),
@@ -144,7 +164,8 @@ const RSSFeed = () => {
           creator: creator,
           category: category,
           source: 'RSS.APP',
-          sourceRegion: 'RSS Feed'
+          sourceRegion: 'RSS Feed',
+          image: linkImagem
         };
       });
       
@@ -1436,13 +1457,26 @@ const RSSFeed = () => {
                 {sortedFilteredNews.map((item, index) => (
                   <article
                     key={item.guid || index}
-                    className={`bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border-l-4 ${
+                    className={`bg-white rounded-lg shadow hover:shadow-md transition-shadow border-l-4 ${
                       rssAppMode ? 'border-blue-500' : 'border-orange-500'
-                    }`}
+                    } overflow-hidden`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex flex-col lg:flex-row">
+                      {/* Imagem - posicionada primeiro no mobile, lateral no desktop */}
+                      {item.image && (
+                        <div className="lg:w-64 lg:flex-shrink-0">
+                          <img 
+                            src={item.image} 
+                            alt={item.title} 
+                            className="w-full h-48 lg:h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Conteúdo principal */}
+                      <div className="flex-1 p-6">
+                        {/* Tags e metadados */}
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             rssAppMode 
                               ? 'bg-blue-100 text-blue-800' 
@@ -1470,34 +1504,37 @@ const RSSFeed = () => {
                               {item.sourceRegion}
                             </span>
                           )}
-                          
+                        </div>
+                        
+                        {/* Título */}
+                        <h4 className={`text-xl font-semibold text-gray-900 mb-3 hover:text-${rssAppMode ? 'blue' : 'orange'}-600 transition-colors leading-tight`}>
+                          {item.title}
+                        </h4>
+                        
+                        {/* Resumo */}
+                        {item.summary && (
+                          <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
+                            {item.summary}
+                          </p>
+                        )}
+                        
+                        {/* Footer com data e botão */}
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm text-gray-500">
                             <Calendar className="w-4 h-4 mr-1" />
                             {formatDate(item.pubDate)}
                           </div>
+                          
+                          <Button
+                            onClick={() => window.open(item.link, '_blank')}
+                            variant="outline"
+                            size="sm"
+                            className={`flex items-center space-x-2 hover:bg-${rssAppMode ? 'blue' : 'orange'}-50 hover:border-${rssAppMode ? 'blue' : 'orange'}-300`}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span>Ler mais</span>
+                          </Button>
                         </div>
-                        
-                        <h4 className={`text-lg font-semibold text-gray-900 mb-2 hover:text-${rssAppMode ? 'blue' : 'orange'}-600 transition-colors`}>
-                          {item.title}
-                        </h4>
-                        
-                        {item.summary && (
-                          <p className="text-gray-600 mb-3 line-clamp-2">
-                            {item.summary}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 mt-4 sm:mt-0 sm:ml-4">
-                        <Button
-                          onClick={() => window.open(item.link, '_blank')}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center space-x-2"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          <span>Ler mais</span>
-                        </Button>
                       </div>
                     </div>
                   </article>

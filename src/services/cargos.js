@@ -35,6 +35,16 @@ const cargoService = {
     }
   },
 
+    getUniqueCargoNames: async () => {
+    try {
+      const result = await makeRequest(`${API_URL}/api/cargos/unique-names`);
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar nomes únicos de cargos:', error);
+      return { success: false, data: [], error: error.message };
+    }
+  },
+
   // Buscar cargos com filtro
   searchCargos: async (query = '') => {
     try {

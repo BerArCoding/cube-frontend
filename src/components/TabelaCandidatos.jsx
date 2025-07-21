@@ -25,84 +25,9 @@ const TabelaCandidatos = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
 
-  useEffect(() => {
-    carregarCandidatos();
-  }, []);
-
-const carregarCandidatos = async () => {
-  try {
-    setLoading(true);
-
-    const token = localStorage.getItem('cube_token');
-    const response = await fetch(`${API_BASE}/api/dashboard/candidatos`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, 
-      },
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      setCandidatos(data.data || []);
-    } else {
-      console.error('❌ Erro ao carregar candidatos:', data.error);
-    }
-  } catch (error) {
-    console.error('❌ Erro na requisição:', error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Filtrar candidatos por busca
-  const candidatosFiltrados = useMemo(() => {
-    return candidatos.filter(candidato =>
-      candidato.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato.instagramHandle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato.cargo?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato.cargoPretendido?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [candidatos, searchTerm]);
-
-  // Ordenar candidatos
-  const candidatosOrdenados = useMemo(() => {
-    if (!sortConfig.key) return candidatosFiltrados;
-
-    return [...candidatosFiltrados].sort((a, b) => {
-      let aValue = getNestedValue(a, sortConfig.key);
-      let bValue = getNestedValue(b, sortConfig.key);
-
-      // Tratar valores nulos
-      if (aValue === null || aValue === undefined) aValue = 0;
-      if (bValue === null || bValue === undefined) bValue = 0;
-
-      // Comparação numérica ou string
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-      
-      return sortConfig.direction === 'asc' 
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
-    });
-  }, [candidatosFiltrados, sortConfig]);
-
-  // Paginação
-  const totalPages = Math.ceil(candidatosOrdenados.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const candidatosPaginados = candidatosOrdenados.slice(startIndex, startIndex + itemsPerPage);
-
+  // ✅ Mover funções utilitárias para fora dos hooks
   const getNestedValue = (obj, path) => {
     return path.split('.').reduce((curr, prop) => curr?.[prop], obj);
-  };
-
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
   };
 
   const formatNumber = (num) => {
@@ -135,12 +60,91 @@ const carregarCandidatos = async () => {
     return colors[categoria] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  useEffect(() => {
+    carregarCandidatos();
+  }, []);
+
+  const carregarCandidatos = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem('cube_token');
+      const response = await fetch(`${API_BASE}/api/dashboard/candidatos`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, 
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCandidatos(data.data || []);
+      } else {
+        console.error('❌ Erro ao carregar candidatos:', data.error);
+      }
+    } catch (error) {
+      console.error('❌ Erro na requisição:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrar candidatos por busca
+  const candidatosFiltrados = useMemo(() => {
+    if (!candidatos || candidatos.length === 0) return [];
+    
+    return candidatos.filter(candidato =>
+      candidato?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidato?.instagramHandle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidato?.cargo?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidato?.cargoPretendido?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidato?.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [candidatos, searchTerm]);
+
+  // Ordenar candidatos
+  const candidatosOrdenados = useMemo(() => {
+    if (!sortConfig.key || candidatosFiltrados.length === 0) return candidatosFiltrados;
+
+    return [...candidatosFiltrados].sort((a, b) => {
+      let aValue = getNestedValue(a, sortConfig.key);
+      let bValue = getNestedValue(b, sortConfig.key);
+
+      // Tratar valores nulos
+      if (aValue === null || aValue === undefined) aValue = 0;
+      if (bValue === null || bValue === undefined) bValue = 0;
+
+      // Comparação numérica ou string
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      return sortConfig.direction === 'asc' 
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+  }, [candidatosFiltrados, sortConfig]);
+
+  // Paginação
+  const totalPages = Math.ceil(candidatosOrdenados.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const candidatosPaginados = candidatosOrdenados.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
   const handleCandidatoClick = (candidato) => {
     // TODO: Navegar para página do candidato
     console.log('🎯 Clicou no candidato:', candidato.nome);
     // navigate(`/candidates/${candidato.id}`);
   };
 
+  // ✅ Componente SortableHeader movido para dentro do componente principal
   const SortableHeader = ({ children, sortKey, className = "" }) => (
     <th 
       className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
@@ -247,30 +251,30 @@ const carregarCandidatos = async () => {
                 className="hover:bg-gray-50 cursor-pointer transition-colors"
               >
                 {/* Candidato */}
-              <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white z-10 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <CandidateAvatar 
-                    candidate={candidato} 
-                    size="md" 
-                    showStatus={true} 
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {candidato.nome}
-                    </p>
-                    {candidato.verified && (
-                      <div className="flex items-center mt-1">
-                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
+                <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white z-10 shadow-sm">
+                  <div className="flex items-center space-x-3">
+                    <CandidateAvatar 
+                      candidate={candidato} 
+                      size="md" 
+                      showStatus={true} 
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {candidato.nome}
+                      </p>
+                      {candidato.verified && (
+                        <div className="flex items-center mt-1">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-xs text-blue-600 ml-1">Verificado</span>
                         </div>
-                        <span className="text-xs text-blue-600 ml-1">Verificado</span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </td>
+                </td>
 
                 {/* Cargo Atual */}
                 <td className="px-4 py-4 whitespace-nowrap">

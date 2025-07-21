@@ -142,7 +142,7 @@ const RSSAppFeed = () => {
     }
   };
 
-  // Carregar feeds RSS.APP salvos
+  // Carregar feeds salvos
   useEffect(() => {
     const carregarRSSAppFeeds = async () => {
       if (!authAPI.isAuthenticated()) return;
@@ -160,7 +160,7 @@ const RSSAppFeed = () => {
         setExpandedFeeds(expanded);
         
       } catch (error) {
-        console.error('❌ Erro ao carregar feeds RSS.APP:', error);
+        console.error('❌ Erro ao carregar feeds:', error);
         setError(`Erro ao carregar feeds: ${error.message}`);
         setRssAppFeeds([]);
       } finally {
@@ -431,10 +431,10 @@ const RSSAppFeed = () => {
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <Rss className="h-16 w-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Nenhum feed RSS.APP cadastrado
+            Nenhum feed cadastrado
           </h3>
           <p className="text-gray-600 mb-4">
-            Vá em Configurações para cadastrar feeds RSS.APP no sistema.
+            Vá em Configurações para cadastrar feeds no sistema.
           </p>
           <Button
             onClick={() => window.location.href = '/configuracoes'}
@@ -464,7 +464,7 @@ const RSSAppFeed = () => {
                         {feedData.feedName}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {extractDomain(feedData.feedUrl)} • {feedData.news.length} notícias carregadas
+                        • {feedData.news.length} notícias carregadas
                       </p>
                     </div>
                   </div>

@@ -139,15 +139,6 @@ const Header = ({ title = "CUBE Dashboard" }) => {
 
                   {/* Menu Items */}
                   <div className="py-2">
-                    <button className="flex items-center space-x-3 w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
-                      <div className="p-1 rounded-md bg-slate-100 group-hover:bg-slate-200 transition-colors">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div className="text-left">
-                        <span className="font-medium">Meu Perfil</span>
-                        <p className="text-xs text-slate-500">Editar informações pessoais</p>
-                      </div>
-                    </button>
                     {isAdmin() && (
                       <button 
                         onClick={() => {
@@ -180,7 +171,7 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         <p className="text-xs text-slate-500">Preferências do sistema</p>
                       </div>
                     </button>
-                    <button 
+                    {isAdmin() && (<button 
                       onClick={() => {
                         navigate('/rss-feed');
                         setIsDropdownOpen(false);
@@ -193,10 +184,11 @@ const Header = ({ title = "CUBE Dashboard" }) => {
                         </svg>
                       </div>
                       <div className="text-left">
-                        <span className="font-medium">RSS Feed</span>
+                        <span className="font-medium">Noticias</span>
                         <p className="text-xs text-slate-500">Últimas notícias</p>
                       </div>
-                    </button>
+                    </button>)}
+                    
                   </div>
 
                   {/* Logout */}

@@ -577,9 +577,8 @@ const Configuracoes = () => {
   const menuItems = [
     { id: 'perfil', label: 'Perfil', icon: User },
     { id: 'seguranca', label: 'Segurança', icon: Key },
-    { id: 'dominios', label: 'Domínios RSS', icon: Globe },
     // Adicionar categoria de usuários apenas para admins
-    ...(userData.tipo === 'ADMIN' ? [{ id: 'usuarios', label: 'Usuários', icon: Shield }] : [])
+    ...(userData.tipo === 'ADMIN' ? [{ id: 'usuarios', label: 'Usuários', icon: Shield },{ id: 'dominios', label: 'Domínios RSS', icon: Globe }] : [])
   ];
 
   return (

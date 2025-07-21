@@ -310,7 +310,7 @@ const CandidatesList = () => {
             <p className="text-slate-600 mb-6">
               {searchTerm || filterCargo ? 
                 'Tente ajustar os filtros de busca' : 
-                'Comece adicionando seu primeiro candidato'
+                'Comece adicionando seu rimeiro candidato'
               }
             </p>
             {!searchTerm && !filterCargo && (

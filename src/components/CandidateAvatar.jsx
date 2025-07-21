@@ -54,7 +54,6 @@ const CandidateAvatar = ({
           alt={candidate.nome}
           className="h-full w-full object-cover"
           onError={handleImageError}
-          onLoad={() => console.log('✅ Foto carregada com sucesso:', avatarUrl)}
           referrerPolicy="no-referrer"
         />
       ) : null}

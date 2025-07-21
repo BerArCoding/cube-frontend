@@ -40,16 +40,12 @@ export const AuthProvider = ({ children }) => {
 // hooks/useAuth.jsx - SÓ ADICIONAR LOGS
 const login = async (credentials) => {
   try {
-    console.log('🔍 Tentando login...'); // ← ADICIONAR LOG
     setLoading(true);
     const response = await authAPI.login(credentials);
-    
-    console.log('🔍 Resposta authAPI:', response); // ← ADICIONAR LOG
     
     if (response.user && response.token) {
       setUser(response.user);
       setIsAuthenticated(true);
-      console.log('✅ Login sucesso!'); // ← ADICIONAR LOG
       return { success: true, user: response.user };
     }
     

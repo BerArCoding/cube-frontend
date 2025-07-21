@@ -1,4 +1,4 @@
-// pages/Dashboard.jsx - COM ÍCONES E RSS.APP
+// pages/Dashboard.jsx - COM TABELA EMBAIXO
 import { useState, useEffect } from 'react';
 import { 
   RefreshCw, 
@@ -19,7 +19,8 @@ import SemaforoViabilidade from '../components/dashboard/SemaforoViabilidade';
 import RedesSociais from '../components/dashboard/RedesSociais';
 import NuvemPalavras from '../components/dashboard/NuvemPalavras';
 import MetricasAvancadas from '../components/dashboard/MetricasAvancadas';
-import RSSAppFeed from '../components/RssAppFeed'; // ← NOVO IMPORT
+import RSSAppFeed from '../components/RssAppFeed';
+import TabelaCandidatos from '../components/TabelaCandidatos';
 import styles from '../styles/Dashboard.module.css';
 import FiltrosDashboard from '../components/dashboard/FiltrosDashboard';
 
@@ -117,8 +118,7 @@ const Dashboard = () => {
     { id: 'redes', label: 'Redes Sociais', icon: Activity },
     { id: 'viabilidade', label: 'Viabilidade', icon: Target },
     { id: 'palavras', label: 'Nuvem de Palavras', icon: MessageSquare },
-    { id: 'rss', label: 'Noticias', icon: Rss }, // ← ATUALIZADO ÍCONE E LABEL
-    // { id: 'avancado', label: 'Métricas Avançadas', icon: TrendingUp }
+    { id: 'rss', label: 'Noticias', icon: Rss },
   ];
 
   if (loading && !dados && !filtrosCarregados) {
@@ -273,6 +273,11 @@ const Dashboard = () => {
                   <RedesSociais dados={dados?.redesSociais} showIcons={false} />
                 </div>
               </div>
+
+              {/* ✅ TABELA DE CANDIDATOS EMBAIXO */}
+              <div className={`${styles.hoverLift}`}>
+                <TabelaCandidatos />
+              </div>
             </div>
           )}
 
@@ -300,7 +305,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* ✅ NOVA ABA RSS com o componente RSSAppFeed */}
+          {/* ✅ ABA RSS */}
           {abaSelecionada === 'rss' && (
             <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
               <RSSAppFeed />

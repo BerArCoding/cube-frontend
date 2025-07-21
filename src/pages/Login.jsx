@@ -66,10 +66,8 @@ const handleSubmit = async (e) => {
       password: formData.password
     });
 
-    console.log('🔍 Tentando login com:', formData);
 
     if (result.success) {
-      console.log('✅ Login bem-sucedido:', result.user);
       navigate(from, { replace: true });
     } else {
       setErrors({ 

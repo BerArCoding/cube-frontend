@@ -1,4 +1,4 @@
-// pages/Dashboard.jsx - COM ÍCONES
+// pages/Dashboard.jsx - COM ÍCONES E RSS.APP
 import { useState, useEffect } from 'react';
 import { 
   RefreshCw, 
@@ -11,26 +11,27 @@ import {
   Target,
   MessageSquare,
   Activity,
-  Zap
+  Zap,
+  Rss
 } from 'lucide-react';
 import Header from '../components/Header';
 import SemaforoViabilidade from '../components/dashboard/SemaforoViabilidade';
 import RedesSociais from '../components/dashboard/RedesSociais';
 import NuvemPalavras from '../components/dashboard/NuvemPalavras';
 import MetricasAvancadas from '../components/dashboard/MetricasAvancadas';
+import RSSAppFeed from '../components/RssAppFeed'; // ← NOVO IMPORT
 import styles from '../styles/Dashboard.module.css';
 import FiltrosDashboard from '../components/dashboard/FiltrosDashboard';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// pages/Dashboard.jsx - CORRIGIR o useEffect
 const Dashboard = () => {
   const [dados, setDados] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
   const [abaSelecionada, setAbaSelecionada] = useState('geral');
   const [filtrosAtivos, setFiltrosAtivos] = useState(null);
-  const [filtrosCarregados, setFiltrosCarregados] = useState(false); // ← NOVO
+  const [filtrosCarregados, setFiltrosCarregados] = useState(false);
 
   // ✅ CORRIGIR - Carregar dados quando filtros estiverem prontos
   useEffect(() => {
@@ -115,7 +116,8 @@ const Dashboard = () => {
     { id: 'geral', label: 'Visão Geral', icon: BarChart3 },
     { id: 'redes', label: 'Redes Sociais', icon: Activity },
     { id: 'viabilidade', label: 'Viabilidade', icon: Target },
-    { id: 'palavras', label: 'Nuvem de Palavras', icon: MessageSquare }
+    { id: 'palavras', label: 'Nuvem de Palavras', icon: MessageSquare },
+    { id: 'rss', label: 'Noticias', icon: Rss }, // ← ATUALIZADO ÍCONE E LABEL
     // { id: 'avancado', label: 'Métricas Avançadas', icon: TrendingUp }
   ];
 
@@ -179,9 +181,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={`mb-8 ${styles.animateSlideUp} relative z-50`} style={{ animationDelay: '0.05s', minHeight: '300px' }}>
-          <FiltrosDashboard onFiltroChange={handleFiltroChange} />
-        </div>
+        {/* ✅ Filtros só aparecem se não for a aba RSS */}
+        {abaSelecionada !== 'rss' && (
+          <div className={`mb-8 ${styles.animateSlideUp} relative z-50`} style={{ animationDelay: '0.05s', minHeight: '300px' }}>
+            <FiltrosDashboard onFiltroChange={handleFiltroChange} />
+          </div>
+        )}
 
         {/* Navegação por Abas */}
         <div className={`mb-8 ${styles.animateSlideUp}`} style={{ animationDelay: '0.1s' }}>
@@ -207,18 +212,6 @@ const Dashboard = () => {
             </nav>
           </div>
         </div>
-
-        {/* Debug: Mostrar dados carregados */}
-        {/* {process.env.NODE_ENV === 'development' && dados && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <details>
-              <summary className="text-xs text-yellow-700 cursor-pointer">Debug: Dados carregados</summary>
-              <pre className="text-xs text-yellow-600 mt-2 overflow-auto">
-                {JSON.stringify(dados, null, 2)}
-              </pre>
-            </details>
-          </div>
-        )} */}
 
         {/* Conteúdo das Abas */}
         <div className={styles.animateFadeIn}>
@@ -304,6 +297,13 @@ const Dashboard = () => {
           {abaSelecionada === 'avancado' && (
             <div className="space-y-6">
               <MetricasAvancadas dados={dados} />
+            </div>
+          )}
+
+          {/* ✅ NOVA ABA RSS com o componente RSSAppFeed */}
+          {abaSelecionada === 'rss' && (
+            <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
+              <RSSAppFeed />
             </div>
           )}
         </div>

@@ -25,7 +25,7 @@ const TabelaCandidatos = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
 
-  // ✅ Mover funções utilitárias para fora dos hooks
+  // ✅ Funções utilitárias
   const getNestedValue = (obj, path) => {
     return path.split('.').reduce((curr, prop) => curr?.[prop], obj);
   };
@@ -79,12 +79,14 @@ const TabelaCandidatos = () => {
       const data = await response.json();
 
       if (data.success) {
-        setCandidatos(data.data || []);
+        setCandidatos(data.data || []); // Carregar todos os candidatos
       } else {
         console.error('❌ Erro ao carregar candidatos:', data.error);
+        setCandidatos([]);
       }
     } catch (error) {
       console.error('❌ Erro na requisição:', error);
+      setCandidatos([]);
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,8 @@ const TabelaCandidatos = () => {
       candidato?.instagramHandle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidato?.cargo?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidato?.cargoPretendido?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+      candidato?.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidato?.redutoOrigem?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [candidatos, searchTerm]);
 
@@ -139,12 +142,16 @@ const TabelaCandidatos = () => {
   };
 
   const handleCandidatoClick = (candidato) => {
-    // TODO: Navegar para página do candidato
     console.log('🎯 Clicou no candidato:', candidato.nome);
+    // TODO: Navegar para página do candidato
     // navigate(`/candidates/${candidato.id}`);
   };
 
-  // ✅ Componente SortableHeader movido para dentro do componente principal
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // ✅ Componente SortableHeader
   const SortableHeader = ({ children, sortKey, className = "" }) => (
     <th 
       className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
@@ -183,7 +190,7 @@ const TabelaCandidatos = () => {
               <span>Todos os Candidatos</span>
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              {candidatosOrdenados.length} candidatos encontrados
+              {candidatosOrdenados.length} candidatos encontrados de {candidatos.length} total
             </p>
           </div>
           
@@ -196,7 +203,10 @@ const TabelaCandidatos = () => {
               type="text"
               placeholder="Buscar candidatos..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset para página 1 ao buscar
+              }}
               className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
@@ -244,7 +254,7 @@ const TabelaCandidatos = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {candidatosPaginados.map((candidato) => (
+            {candidatosPaginados.length > 0 ? candidatosPaginados.map((candidato) => (
               <tr 
                 key={candidato.id}
                 onClick={() => handleCandidatoClick(candidato)}
@@ -397,7 +407,13 @@ const TabelaCandidatos = () => {
                   )}
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
+                  {searchTerm ? 'Nenhum candidato encontrado para a busca.' : 'Nenhum candidato cadastrado.'}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -412,7 +428,7 @@ const TabelaCandidatos = () => {
             
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1}
                 className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -420,12 +436,25 @@ const TabelaCandidatos = () => {
               </button>
               
               <div className="flex space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1;
+                {Array.from({ length: Math.min(10, totalPages) }, (_, i) => {
+                  let page;
+                  if (totalPages <= 10) {
+                    page = i + 1;
+                  } else {
+                    // Lógica para mostrar páginas relevantes quando há muitas páginas
+                    if (currentPage <= 5) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 4) {
+                      page = totalPages - 9 + i;
+                    } else {
+                      page = currentPage - 4 + i;
+                    }
+                  }
+                  
                   return (
                     <button
                       key={page}
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => handlePageChange(page)}
                       className={`px-3 py-1 text-sm border rounded-md ${
                         currentPage === page
                           ? 'bg-orange-500 text-white border-orange-500'
@@ -439,7 +468,7 @@ const TabelaCandidatos = () => {
               </div>
               
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >

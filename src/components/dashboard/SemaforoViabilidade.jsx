@@ -78,7 +78,7 @@ const SemaforoViabilidade = ({ dados }) => {
           </h4>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {dados.candidatos.map((candidato) => {
-              const categoria = categorias.find(c => c.key === candidato.categoria);
+              const categoria = categorias.find(c => c.key === candidato.categoria?.toLowerCase());
               return (
                 <div 
                   key={candidato.id}

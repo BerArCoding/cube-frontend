@@ -27,6 +27,7 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
     cargoPretendidoId: '',
     instagramHandle: '',
     observacoes: '',
+    votosNecessarios: '',
     mandato: ''
   });
 
@@ -63,6 +64,7 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         cargoPretendidoId: initialData.cargoPretendidoId || '',
         instagramHandle: initialData.instagramHandle || '',
         observacoes: initialData.observacoes || '',
+        votosNecessarios: initialData.votosNecessarios?.toString() || '',
         mandato: initialData.mandato || ''
       });
     }
@@ -202,6 +204,7 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       cargoPretendidoId: formData.cargoPretendidoId || null,
       instagramHandle: cleanInstagram,
       observacoes: formData.observacoes.trim() || null,
+      votosNecessarios: formData.votosNecessarios ? parseInt(formData.votosNecessarios) : null,
       mandato: formData.mandato.trim() || null
     };
 
@@ -670,6 +673,22 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
             icon={Building}
             min="0"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Votos Necessários
+          </label>
+          <Input
+            type="number"
+            placeholder="Ex: 20000"
+            value={formData.votosNecessarios}
+            onChange={handleInputChange('votosNecessarios')}
+            icon={Vote}
+            min="0"
+          />
+          <div className="text-xs text-slate-500 mt-1">
+            Informe manualmente o número de votos necessários para o candidato ser eleito
+          </div>
         </div>
       </div>
 

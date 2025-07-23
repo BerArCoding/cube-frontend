@@ -10,6 +10,7 @@ import CreateCandidate from '../pages/CreateCandidate.jsx';
 import EditCandidate from '../pages/EditCandidate.jsx';
 import RSSFeed from '../pages/RSSFeed.jsx';
 import Configuracoes from '../pages/Configuracoes.jsx';
+import CandidatePage from '../pages/CandidatePage.jsx';
 
 const AppRoutes = () => {
   return (
@@ -87,6 +88,8 @@ const AppRoutes = () => {
               </ProtectedRoute>
             } 
           />
+
+          <Route path="/candidates/:id" element={<CandidatePage />} />
 
           {/* Rotas administrativas (só para admins) */}
           <Route 

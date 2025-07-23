@@ -13,6 +13,7 @@ import {
   MapPin,
   AtSign
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import CandidateAvatar from './CandidateAvatar';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -24,6 +25,7 @@ const TabelaCandidatos = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'followersCount', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
+  const navigate = useNavigate();
 
   // ✅ Funções utilitárias
   const getNestedValue = (obj, path) => {
@@ -142,9 +144,7 @@ const TabelaCandidatos = () => {
   };
 
   const handleCandidatoClick = (candidato) => {
-    console.log('🎯 Clicou no candidato:', candidato.nome);
-    // TODO: Navegar para página do candidato
-    // navigate(`/candidates/${candidato.id}`);
+    navigate(`/candidates/${candidato.id}`);
   };
 
   const handlePageChange = (page) => {

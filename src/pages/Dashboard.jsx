@@ -56,13 +56,24 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Construir query string com filtros
       const params = new URLSearchParams();
       if (filtrosAtivos?.candidatoIds?.length > 0) {
         params.append('candidatos', filtrosAtivos.candidatoIds.join(','));
       }
       if (filtrosAtivos?.cargoIds?.length > 0) {
         params.append('cargos', filtrosAtivos.cargoIds.join(','));
+      }
+      if (filtrosAtivos?.cargoPretendidoIds?.length > 0) {
+        params.append('cargosPretendidos', filtrosAtivos.cargoPretendidoIds.join(','));
+      }
+      if (filtrosAtivos?.mandatos?.length > 0) {
+        params.append('mandatos', filtrosAtivos.mandatos.join(','));
+      }
+      if (filtrosAtivos?.redutosOrigem?.length > 0) {
+        params.append('redutosOrigem', filtrosAtivos.redutosOrigem.join(','));
+      }
+      if (filtrosAtivos?.macrorregiaoIds?.length > 0) {
+        params.append('macrorregioes', filtrosAtivos.macrorregiaoIds.join(','));
       }
 
       const url = `${API_BASE}/api/dashboard${params.toString() ? '?' + params.toString() : ''}`;
@@ -146,9 +157,17 @@ const Dashboard = () => {
         <div className={`mb-8 ${styles.animateSlideUp}`}>
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
             <div>
-              <h2 className="text-3xl font-bold text-slate-700 mb-2">
-                Dashboard de Análise Política
-              </h2>
+              <div className="flex items-center space-x-3 mb-2">
+                <h2 className="text-2xl font-bold text-slate-700">
+                  Dashboard de Análise Política
+                </h2>
+                <img 
+                  src="/logoPP.png" 
+                  alt="Logo PP" 
+                  className="h-16 w-auto"
+                  style={{ maxHeight: '80px' }}
+                />
+              </div>
               <p className="text-slate-500">
                 Acompanhe métricas, viabilidade e engajamento em tempo real
               </p>
@@ -271,6 +290,61 @@ const Dashboard = () => {
                     </h3>
                   </div>
                   <RedesSociais dados={dados?.redesSociais} showIcons={false} />
+                </div>
+              </div>
+
+              <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-5 h-5 bg-[#FF943A] rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-slate-700">
+                    Mapa do Paraná
+                  </h3>
+                </div>
+                
+                {/* ✅ LISTA DAS MACRORREGIÕES */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-slate-600 mb-3">Macrorregiões:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-slate-700">Noroeste</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-slate-700">Norte</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span className="text-slate-700">Centro e Centro-Sul</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-slate-700">Oeste</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-slate-700">Vales do Iguaçu</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                      <span className="text-slate-700">Campos Gerais</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-[#FF943A] rounded-full"></div>
+                      <span className="text-slate-700">Grande Curitiba</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <img 
+                    src="/mapaParana.png" 
+                    alt="Mapa do Paraná" 
+                    className="max-w-full h-auto rounded-lg shadow-md cursor-pointer"
+                    style={{ maxHeight: '500px' }}
+                    onClick={() => setAbaSelecionada('rss')}
+                    title="Clique para ver notícias"
+                  />
                 </div>
               </div>
 

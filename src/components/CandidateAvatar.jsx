@@ -15,7 +15,9 @@ const CandidateAvatar = ({
     sm: 'h-8 w-8',
     md: 'h-12 w-12',
     lg: 'h-16 w-16',
-    xl: 'h-20 w-20'
+    xl: 'h-20 w-20',
+    xxl: 'h-24 w-24',
+    xxxl: 'h-32 w-32'
   };
 
   // ✅ Função para fazer proxy da imagem do Instagram otimizada

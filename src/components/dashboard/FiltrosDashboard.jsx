@@ -1,24 +1,51 @@
 import { useState, useEffect, useRef } from 'react';
-import { Filter, Users, Briefcase, X, Search, Check } from 'lucide-react';
+import { Filter, Users, Briefcase, X, Search, Check, MapPin, Award, Building, Target } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const FiltrosDashboard = ({ onFiltroChange }) => {
   const [filtros, setFiltros] = useState({
     candidatoIds: [],
-    cargoIds: []
+    cargoIds: [],
+    cargoPretendidoIds: [],
+    mandatos: [],
+    redutosOrigem: [],
+    macrorregiaoIds: []
   });
   const [opcoes, setOpcoes] = useState({
     candidatos: [],
-    cargos: []
+    cargos: [],
+    cargosPretendidos: [],
+    mandatos: [],
+    redutosOrigem: [],
+    macrorregioes: []
   });
   const [loading, setLoading] = useState(true);
-  const [buscaCandidatos, setBuscaCandidatos] = useState('');
-  const [buscaCargos, setBuscaCargos] = useState('');
-  const [dropdownAberto, setDropdownAberto] = useState({ candidatos: false, cargos: false });
+  const [busca, setBusca] = useState({
+    candidatos: '',
+    cargos: '',
+    cargosPretendidos: '',
+    mandatos: '',
+    redutosOrigem: '',
+    macrorregioes: ''
+  });
+  const [dropdownAberto, setDropdownAberto] = useState({
+    candidatos: false,
+    cargos: false,
+    cargosPretendidos: false,
+    mandatos: false,
+    redutosOrigem: false,
+    macrorregioes: false
+  });
   
-  const candidatosRef = useRef(null);
-  const cargosRef = useRef(null);
+  const refs = {
+    candidatos: useRef(null),
+    cargos: useRef(null),
+    cargosPretendidos: useRef(null),
+    mandatos: useRef(null),
+    redutosOrigem: useRef(null),
+    macrorregioes: useRef(null)
+  };
 
   useEffect(() => {
     carregarOpcoesFiltros();
@@ -35,10 +62,18 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
         // Iniciar com todos selecionados
         const todosCandidatos = result.dados.candidatos.map(c => c.id);
         const todosCargos = result.dados.cargos.map(c => c.id);
+        const todosCargosPretendidos = result.dados.cargosPretendidos.map(c => c.id);
+        const todosMandatos = result.dados.mandatos || [];
+        const todosRedutos = result.dados.redutosOrigem || [];
+        const todasMacrorregioes = result.dados.macrorregioes.map(m => m.id);
         
         const filtrosIniciais = {
           candidatoIds: todosCandidatos,
-          cargoIds: todosCargos
+          cargoIds: todosCargos,
+          cargoPretendidoIds: todosCargosPretendidos,
+          mandatos: todosMandatos,
+          redutosOrigem: todosRedutos,
+          macrorregiaoIds: todasMacrorregioes
         };
         
         setFiltros(filtrosIniciais);
@@ -51,108 +86,284 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     }
   };
 
-  // Fechar dropdown quando clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        candidatosRef.current && !candidatosRef.current.contains(event.target) &&
-        cargosRef.current && !cargosRef.current.contains(event.target)
-      ) {
-        setDropdownAberto({ candidatos: false, cargos: false });
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    // Só fechar se não clicou em nenhum dropdown
+    const clickedInDropdown = Object.values(refs).some(ref => 
+      ref.current?.contains(event.target)
+    );
+    
+    if (!clickedInDropdown) {
+      setDropdownAberto({
+        candidatos: false,
+        cargos: false,
+        cargosPretendidos: false,
+        mandatos: false,
+        redutosOrigem: false,
+        macrorregioes: false
+      });
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, []);
+
+  const updateFiltros = (newFiltros) => {
+    setFiltros(newFiltros);
+    onFiltroChange(newFiltros);
+  };
+
+  const toggleItem = (tipo, itemId) => {
+    const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                     tipo === 'cargos' ? 'cargoIds' :
+                     tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                     tipo === 'mandatos' ? 'mandatos' :
+                     tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                     'macrorregiaoIds';
+    
+    const isSelected = filtros[campoArray].includes(itemId);
+    const novosFiltros = {
+      ...filtros,
+      [campoArray]: isSelected 
+        ? filtros[campoArray].filter(id => id !== itemId)
+        : [...filtros[campoArray], itemId]
+    };
+    updateFiltros(novosFiltros);
+  };
+
+  const removerItem = (tipo, itemId) => {
+    const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                     tipo === 'cargos' ? 'cargoIds' :
+                     tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                     tipo === 'mandatos' ? 'mandatos' :
+                     tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                     'macrorregiaoIds';
+    
+    const novosFiltros = {
+      ...filtros,
+      [campoArray]: filtros[campoArray].filter(id => id !== itemId)
+    };
+    updateFiltros(novosFiltros);
+  };
+
+const selecionarTodos = (tipo) => {
+  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                   tipo === 'cargos' ? 'cargoIds' :
+                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                   tipo === 'mandatos' ? 'mandatos' :
+                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                   'macrorregiaoIds';
+  
+  let todosIds = [];
+  
+  if (tipo === 'mandatos') {
+    todosIds = [...opcoes.mandatos];
+  } else if (tipo === 'redutosOrigem') {
+    todosIds = [...opcoes.redutosOrigem];
+  } else {
+    todosIds = opcoes[tipo].map(item => item.id);
+  }
+  
+  const novosFiltros = { ...filtros, [campoArray]: todosIds };
+  updateFiltros(novosFiltros);
+};
+
+const limpar = (tipo) => {
+  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                   tipo === 'cargos' ? 'cargoIds' :
+                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                   tipo === 'mandatos' ? 'mandatos' :
+                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                   'macrorregiaoIds';
+  
+  const novosFiltros = { ...filtros, [campoArray]: [] };
+  updateFiltros(novosFiltros);
+};
+
+  // Função para filtrar itens pela busca
+  const filtrarItens = (tipo, termoBusca) => {
+    if (tipo === 'mandatos') {
+      return opcoes.mandatos.filter(mandato =>
+        mandato.toLowerCase().includes(termoBusca.toLowerCase())
+      );
+    }
+    if (tipo === 'redutosOrigem') {
+      return opcoes.redutosOrigem.filter(reduto =>
+        reduto.toLowerCase().includes(termoBusca.toLowerCase())
+      );
+    }
+    
+    return opcoes[tipo].filter(item => {
+      const searchText = termoBusca.toLowerCase();
+      if (tipo === 'candidatos') {
+        return item.nome.toLowerCase().includes(searchText) ||
+               item.cargo?.nome.toLowerCase().includes(searchText);
       }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const toggleCandidato = (candidatoId) => {
-    const isSelected = filtros.candidatoIds.includes(candidatoId);
-    const novosFiltros = {
-      ...filtros,
-      candidatoIds: isSelected 
-        ? filtros.candidatoIds.filter(id => id !== candidatoId)
-        : [...filtros.candidatoIds, candidatoId]
-    };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
+      return item.nome.toLowerCase().includes(searchText) ||
+             (item.nivel && item.nivel.toLowerCase().includes(searchText));
+    });
   };
-
-  const toggleCargo = (cargoId) => {
-    const isSelected = filtros.cargoIds.includes(cargoId);
-    const novosFiltros = {
-      ...filtros,
-      cargoIds: isSelected 
-        ? filtros.cargoIds.filter(id => id !== cargoId)
-        : [...filtros.cargoIds, cargoId]
-    };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const removerCandidato = (candidatoId) => {
-    const novosFiltros = {
-      ...filtros,
-      candidatoIds: filtros.candidatoIds.filter(id => id !== candidatoId)
-    };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const removerCargo = (cargoId) => {
-    const novosFiltros = {
-      ...filtros,
-      cargoIds: filtros.cargoIds.filter(id => id !== cargoId)
-    };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const selecionarTodosCandidatos = () => {
-    const todosCandidatos = opcoes.candidatos.map(c => c.id);
-    const novosFiltros = { ...filtros, candidatoIds: todosCandidatos };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const limparCandidatos = () => {
-    const novosFiltros = { ...filtros, candidatoIds: [] };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const selecionarTodosCargos = () => {
-    const todosCargos = opcoes.cargos.map(c => c.id);
-    const novosFiltros = { ...filtros, cargoIds: todosCargos };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  const limparCargos = () => {
-    const novosFiltros = { ...filtros, cargoIds: [] };
-    setFiltros(novosFiltros);
-    onFiltroChange(novosFiltros);
-  };
-
-  // Filtrar candidatos pela busca
-  const candidatosFiltrados = opcoes.candidatos.filter(candidato =>
-    candidato.nome.toLowerCase().includes(buscaCandidatos.toLowerCase()) ||
-    candidato.cargo?.nome.toLowerCase().includes(buscaCandidatos.toLowerCase())
-  );
-
-  // Filtrar cargos pela busca
-  const cargosFiltrados = opcoes.cargos.filter(cargo =>
-    cargo.nome.toLowerCase().includes(buscaCargos.toLowerCase()) ||
-    cargo.nivel.toLowerCase().includes(buscaCargos.toLowerCase())
-  );
 
   // Obter dados dos selecionados
-  const candidatosSelecionados = opcoes.candidatos.filter(c => 
-    filtros.candidatoIds.includes(c.id)
-  );
-  const cargosSelecionados = opcoes.cargos.filter(c => 
-    filtros.cargoIds.includes(c.id)
-  );
+  const getSelecionados = (tipo) => {
+    const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                     tipo === 'cargos' ? 'cargoIds' :
+                     tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                     tipo === 'mandatos' ? 'mandatos' :
+                     tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                     'macrorregiaoIds';
+    
+    if (tipo === 'mandatos') {
+      return opcoes.mandatos.filter(mandato => filtros[campoArray].includes(mandato));
+    }
+    if (tipo === 'redutosOrigem') {
+      return opcoes.redutosOrigem.filter(reduto => filtros[campoArray].includes(reduto));
+    }
+    
+    return opcoes[tipo].filter(item => filtros[campoArray].includes(item.id));
+  };
+
+  const FiltroDropdown = ({ tipo, label, icon: IconComponent, color, placeholder }) => {
+    const selecionados = getSelecionados(tipo);
+    const itensFiltrados = filtrarItens(tipo, busca[tipo]);
+    const totalOpcoes = tipo === 'mandatos' || tipo === 'redutosOrigem' ? opcoes[tipo].length : opcoes[tipo].length;
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="flex items-center space-x-2">
+            <IconComponent className={`w-4 h-4 ${color}`} />
+            <span className="text-sm font-semibold text-slate-700">
+              {label} ({selecionados.length}/{totalOpcoes})
+            </span>
+          </label>
+          <div className="flex space-x-2">
+            <button
+              onMouseDown={(e) => {
+                e.preventDefault(); // ✅ Prevenir o foco
+                e.stopPropagation(); // ✅ Parar propagação do evento
+                selecionarTodos(tipo);
+              }}
+              className={`text-xs ${color} hover:opacity-80 font-medium`}
+            >
+              Todos
+            </button>
+            <button
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation(); 
+                limpar(tipo);
+              }}
+              className="text-xs text-slate-600 hover:text-slate-800 font-medium"
+            >
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        {/* Tags dos Selecionados */}
+        {selecionados.length > 0 && (
+          <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+            {selecionados.map(item => {
+              const nome = typeof item === 'string' ? item : item.nome;
+              const id = typeof item === 'string' ? item : item.id;
+              const colorClass = color.replace('text-', 'bg-').replace('500', '100');
+              const textColorClass = color.replace('text-', 'text-').replace('500', '800');
+              
+              return (
+                <span
+                  key={id}
+                  className={`inline-flex items-center ${colorClass} ${textColorClass} text-xs px-2 py-1 rounded-full h-fit`}
+                >
+                  {nome}
+                  <button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removerItem(tipo, id);
+                    }}
+                    className="ml-1 hover:bg-opacity-20 hover:bg-black rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Dropdown */}
+        <div className="relative" ref={refs[tipo]}>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder={placeholder}
+              value={busca[tipo]}
+              onChange={(e) => setBusca({ ...busca, [tipo]: e.target.value })}
+              onFocus={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))}
+              onClick={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))} // ✅ ADICIONAR
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
+            />
+          </div>
+
+          {dropdownAberto[tipo] && (
+            <div 
+              className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
+              style={{ zIndex: 1000 }}
+            >
+              {itensFiltrados.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-slate-500">
+                  Nenhum item encontrado
+                </div>
+              ) : (
+                itensFiltrados.map(item => {
+                  const nome = typeof item === 'string' ? item : item.nome;
+                  const id = typeof item === 'string' ? item : item.id;
+                  const subtitle = typeof item === 'object' ? 
+                    (item.nivel || (item.cargo && `${item.cargo.nome} (${item.cargo.nivel})`)) : null;
+                  
+                  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                                   tipo === 'cargos' ? 'cargoIds' :
+                                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                                   tipo === 'mandatos' ? 'mandatos' :
+                                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                                   'macrorregiaoIds';
+                  
+                  const isSelected = filtros[campoArray].includes(id);
+                  
+                  return (
+                    <div
+                      key={id}
+                      onClick={() => toggleItem(tipo, id)}
+                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-center w-4 h-4">
+                        {isSelected && (
+                          <Check className={`w-4 h-4 ${color}`} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {nome}
+                        </div>
+                        {subtitle && (
+                          <div className="text-xs text-slate-500">
+                            {subtitle}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -172,233 +383,131 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
         <Filter className="w-5 h-5 text-[#FF943A]" />
         <h3 className="text-lg font-semibold text-slate-700">Filtros</h3>
         <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs">
-          {filtros.candidatoIds.length} candidatos, {filtros.cargoIds.length} cargos
+          {filtros.candidatoIds.length} candidatos, {filtros.cargoIds.length} cargos, {filtros.macrorregiaoIds.length} regiões
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Filtro Candidatos */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-semibold text-slate-700">
-                Candidatos ({candidatosSelecionados.length}/{opcoes.candidatos.length})
-              </span>
-            </label>
-            <div className="flex space-x-2">
-              <button
-                onClick={selecionarTodosCandidatos}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Todos
-              </button>
-              <button
-                onClick={limparCandidatos}
-                className="text-xs text-slate-600 hover:text-slate-800 font-medium"
-              >
-                Limpar
-              </button>
-            </div>
-          </div>
-
-          {/* Tags dos Selecionados */}
-          {candidatosSelecionados.length > 0 && (
-            <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
-              {candidatosSelecionados.map(candidato => (
-                <span
-                  key={candidato.id}
-                  className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full h-fit"
-                >
-                  {candidato.nome}
-                  <button
-                    onClick={() => removerCandidato(candidato.id)}
-                    className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Dropdown Candidatos - STYLE SELECT2 */}
-          <div className="relative" ref={candidatosRef}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar candidatos..."
-                value={buscaCandidatos}
-                onChange={(e) => setBuscaCandidatos(e.target.value)}
-                onFocus={() => setDropdownAberto({ ...dropdownAberto, candidatos: true })}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
-              />
-            </div>
-
-            {dropdownAberto.candidatos && (
-              <div 
-                className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
-                style={{ zIndex: 1000 }}
-              >
-                {candidatosFiltrados.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-slate-500">
-                    Nenhum candidato encontrado
-                  </div>
-                ) : (
-                  candidatosFiltrados.map(candidato => (
-                    <div
-                      key={candidato.id}
-                      onClick={() => toggleCandidato(candidato.id)}
-                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
-                    >
-                      <div className="flex items-center justify-center w-4 h-4">
-                        {filtros.candidatoIds.includes(candidato.id) && (
-                          <Check className="w-4 h-4 text-blue-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
-                          {candidato.nome}
-                        </div>
-                        {candidato.cargo && (
-                          <div className="text-xs text-slate-500">
-                            {candidato.cargo.nome} ({candidato.cargo.nivel})
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <FiltroDropdown
+          tipo="candidatos"
+          label="Candidatos"
+          icon={Users}
+          color="text-blue-500"
+          placeholder="Buscar candidatos..."
+        />
 
         {/* Filtro Cargos */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <Briefcase className="w-4 h-4 text-green-500" />
-              <span className="text-sm font-semibold text-slate-700">
-                Cargos ({cargosSelecionados.length}/{opcoes.cargos.length})
-              </span>
-            </label>
-            <div className="flex space-x-2">
-              <button
-                onClick={selecionarTodosCargos}
-                className="text-xs text-green-600 hover:text-green-800 font-medium"
-              >
-                Todos
-              </button>
-              <button
-                onClick={limparCargos}
-                className="text-xs text-slate-600 hover:text-slate-800 font-medium"
-              >
-                Limpar
-              </button>
-            </div>
-          </div>
+        <FiltroDropdown
+          tipo="cargos"
+          label="Cargos Atuais"
+          icon={Briefcase}
+          color="text-green-500"
+          placeholder="Buscar cargos..."
+        />
 
-          {/* Tags dos Selecionados */}
-          {cargosSelecionados.length > 0 && (
-            <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
-              {cargosSelecionados.map(cargo => (
-                <span
-                  key={cargo.id}
-                  className="inline-flex items-center bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full h-fit"
-                >
-                  {cargo.nome}
-                  <button
-                    onClick={() => removerCargo(cargo.id)}
-                    className="ml-1 hover:bg-green-200 rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+        {/* Filtro Cargos Pretendidos */}
+        <FiltroDropdown
+          tipo="cargosPretendidos"
+          label="Cargos Pretendidos"
+          icon={Target}
+          color="text-purple-500"
+          placeholder="Buscar cargos pretendidos..."
+        />
 
-          {/* Dropdown Cargos - STYLE SELECT2 */}
-          <div className="relative" ref={cargosRef}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar cargos..."
-                value={buscaCargos}
-                onChange={(e) => setBuscaCargos(e.target.value)}
-                onFocus={() => setDropdownAberto({ ...dropdownAberto, cargos: true })}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
-              />
-            </div>
+        {/* Filtro Mandatos */}
+        <FiltroDropdown
+          tipo="mandatos"
+          label="Mandatos"
+          icon={Award}
+          color="text-orange-500"
+          placeholder="Buscar mandatos..."
+        />
 
-            {dropdownAberto.cargos && (
-              <div 
-                className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
-                style={{ zIndex: 1000 }}
-              >
-                {cargosFiltrados.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-slate-500">
-                    Nenhum cargo encontrado
-                  </div>
-                ) : (
-                  cargosFiltrados.map(cargo => (
-                    <div
-                      key={cargo.id}
-                      onClick={() => toggleCargo(cargo.id)}
-                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
-                    >
-                      <div className="flex items-center justify-center w-4 h-4">
-                        {filtros.cargoIds.includes(cargo.id) && (
-                          <Check className="w-4 h-4 text-green-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
-                          {cargo.nome}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {cargo.nivel}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Filtro Redutos de Origem */}
+        <FiltroDropdown
+          tipo="redutosOrigem"
+          label="Redutos de Origem"
+          icon={Building}
+          color="text-red-500"
+          placeholder="Buscar redutos..."
+        />
+
+        {/* Filtro Macrorregiões */}
+        <FiltroDropdown
+          tipo="macrorregioes"
+          label="Macrorregiões"
+          icon={MapPin}
+          color="text-indigo-500"
+          placeholder="Buscar macrorregiões..."
+        />
       </div>
 
       {/* Resumo dos Filtros Aplicados */}
-      {(filtros.candidatoIds.length > 0 || filtros.cargoIds.length > 0) && (
-        <div className="mt-6 pt-4 border-t border-slate-200">
-          <div className="text-xs text-slate-600 mb-2">Filtros aplicados:</div>
-          <div className="flex flex-wrap gap-2">
-            {filtros.candidatoIds.length === opcoes.candidatos.length ? (
-              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                ✓ Todos os candidatos
-              </span>
-            ) : filtros.candidatoIds.length > 0 && (
-              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                {filtros.candidatoIds.length} candidato{filtros.candidatoIds.length > 1 ? 's' : ''}
-              </span>
-            )}
-            
-            {filtros.cargoIds.length === opcoes.cargos.length ? (
-              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                ✓ Todos os cargos
-              </span>
-            ) : filtros.cargoIds.length > 0 && (
-              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                {filtros.cargoIds.length} cargo{filtros.cargoIds.length > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
+      <div className="mt-6 pt-4 border-t border-slate-200">
+        <div className="text-xs text-slate-600 mb-2">Filtros aplicados:</div>
+        <div className="flex flex-wrap gap-2">
+          {filtros.candidatoIds.length === opcoes.candidatos.length ? (
+            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todos os candidatos
+            </span>
+          ) : filtros.candidatoIds.length > 0 && (
+            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.candidatoIds.length} candidato{filtros.candidatoIds.length > 1 ? 's' : ''}
+            </span>
+          )}
+          
+          {filtros.cargoIds.length === opcoes.cargos.length ? (
+            <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todos os cargos
+            </span>
+          ) : filtros.cargoIds.length > 0 && (
+            <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.cargoIds.length} cargo{filtros.cargoIds.length > 1 ? 's' : ''}
+            </span>
+          )}
+
+          {filtros.cargoPretendidoIds.length === opcoes.cargosPretendidos.length ? (
+            <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todos os cargos pretendidos
+            </span>
+          ) : filtros.cargoPretendidoIds.length > 0 && (
+            <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.cargoPretendidoIds.length} cargo{filtros.cargoPretendidoIds.length > 1 ? 's' : ''} pretendido{filtros.cargoPretendidoIds.length > 1 ? 's' : ''}
+            </span>
+          )}
+
+          {filtros.mandatos.length === opcoes.mandatos.length ? (
+            <span className="bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todos os mandatos
+            </span>
+          ) : filtros.mandatos.length > 0 && (
+            <span className="bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.mandatos.length} mandato{filtros.mandatos.length > 1 ? 's' : ''}
+            </span>
+          )}
+
+          {filtros.redutosOrigem.length === opcoes.redutosOrigem.length ? (
+            <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todos os redutos
+            </span>
+          ) : filtros.redutosOrigem.length > 0 && (
+            <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.redutosOrigem.length} reduto{filtros.redutosOrigem.length > 1 ? 's' : ''}
+            </span>
+          )}
+
+          {filtros.macrorregiaoIds.length === opcoes.macrorregioes.length ? (
+            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium">
+              ✓ Todas as macrorregiões
+            </span>
+          ) : filtros.macrorregiaoIds.length > 0 && (
+            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium">
+              {filtros.macrorregiaoIds.length} macrorregião{filtros.macrorregiaoIds.length > 1 ? 'ões' : ''}
+            </span>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -91,27 +91,6 @@ const CreateCandidate = () => {
           />
         </div>
 
-        {/* Dicas */}
-        {/* <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">💡 Dicas</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Para cargos, digite e o sistema buscará na base de dados ou criará novos</li>
-            <li>• A foto deve ser uma URL válida (ex: link do Google Drive público)</li>
-            <li>• Votos da última eleição ajudam na análise de viabilidade</li>
-            <li>• Reduto de origem pode ser cidade, região ou estado</li>
-            <li>• Todos os campos são opcionais, exceto o nome</li>
-          </ul>
-        </div> */}
-
-        {/* Debug Info - remover em produção */}
-        {/* {import.meta.env.DEV && (
-          <div className="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600">
-            <p><strong>Debug:</strong></p>
-            <p>API: {import.meta.env.VITE_API_URL || 'http://localhost:3001'}</p>
-            <p>Endpoint: POST /api/candidates</p>
-            <p>Status: {isLoading ? 'Carregando...' : 'Pronto'}</p>
-          </div>
-        )} */}
       </div>
     </div>
   );

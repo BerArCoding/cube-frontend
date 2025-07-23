@@ -24,9 +24,10 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
     votosUltimaEleicao: '',
     populacaoCidade: '',
     votosValidos: '',
-    cargoPretendidoId: '', // ✅ MUDANÇA: ID em vez de string
+    cargoPretendidoId: '',
     instagramHandle: '',
-    observacoes: ''
+    observacoes: '',
+    mandato: ''
   });
 
   const [cargos, setCargos] = useState([]);
@@ -49,7 +50,6 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
   // Carregar dados iniciais quando for edição
   useEffect(() => {
     if (initialData) {
-      console.log('📥 Dados iniciais recebidos:', initialData);
       
       setFormData({
         nome: initialData.nome || '',
@@ -60,9 +60,10 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         votosUltimaEleicao: initialData.votosUltimaEleicao?.toString() || '',
         populacaoCidade: initialData.populacaoCidade?.toString() || '',
         votosValidos: initialData.votosValidos?.toString() || '',
-        cargoPretendidoId: initialData.cargoPretendidoId || '', // ✅ MUDANÇA
+        cargoPretendidoId: initialData.cargoPretendidoId || '',
         instagramHandle: initialData.instagramHandle || '',
-        observacoes: initialData.observacoes || ''
+        observacoes: initialData.observacoes || '',
+        mandato: initialData.mandato || ''
       });
     }
   }, [initialData]);
@@ -198,9 +199,10 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       votosUltimaEleicao: formData.votosUltimaEleicao ? parseInt(formData.votosUltimaEleicao) : null,
       populacaoCidade: formData.populacaoCidade ? parseInt(formData.populacaoCidade) : null,
       votosValidos: formData.votosValidos ? parseInt(formData.votosValidos) : null,
-      cargoPretendidoId: formData.cargoPretendidoId || null, // ✅ MUDANÇA
+      cargoPretendidoId: formData.cargoPretendidoId || null,
       instagramHandle: cleanInstagram,
-      observacoes: formData.observacoes.trim() || null
+      observacoes: formData.observacoes.trim() || null,
+      mandato: formData.mandato.trim() || null
     };
 
     console.log('📤 Enviando dados:', candidateData);
@@ -303,7 +305,7 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
               <div className="flex-1 min-w-0">
                 {selectedCargo ? (
                   <span className="text-slate-900">
-                    {selectedCargo.nome} <span className="text-slate-500">({selectedCargo.nivel})</span>
+                    {selectedCargo.nome}
                   </span>
                 ) : (
                   <span className="text-slate-500">
@@ -368,10 +370,6 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{cargo.nome}</span>
-                          <span className="text-xs text-slate-500">{cargo.nivel}</span>
-                          {cargo.descricao && (
-                            <span className="text-xs text-slate-400 truncate">{cargo.descricao}</span>
-                          )}
                         </div>
                       </div>
                     ))
@@ -386,6 +384,23 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
           </div>
           <div className="text-xs text-slate-500 mt-1">
             {cargos.length} cargos disponíveis
+          </div>
+        </div>
+
+        {/* ✅ Campo Mandato */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Mandato
+          </label>
+          <Input
+            type="text"
+            placeholder="Ex: Eleito, Reeleito, 3 Mandato...."
+            value={formData.mandato || ''}
+            onChange={handleInputChange('mandato')}
+            icon={Briefcase}
+          />
+          <div className="text-xs text-slate-500 mt-1">
+            Informe o período ou status do mandato atual (se houver)
           </div>
         </div>
 
@@ -516,7 +531,7 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
               <div className="flex-1 min-w-0">
                 {selectedCargoPretendido ? (
                   <span className="text-slate-900">
-                    {selectedCargoPretendido.nome} <span className="text-slate-500">({selectedCargoPretendido.nivel})</span>
+                    {selectedCargoPretendido.nome} 
                   </span>
                 ) : (
                   <span className="text-slate-500">
@@ -581,10 +596,6 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{cargo.nome}</span>
-                          <span className="text-xs text-slate-500">{cargo.nivel}</span>
-                          {cargo.descricao && (
-                            <span className="text-xs text-slate-400 truncate">{cargo.descricao}</span>
-                          )}
                         </div>
                       </div>
                     ))
@@ -674,9 +685,6 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
           onChange={handleInputChange('instagramHandle')}
           icon={Instagram}
         />
-        <div className="text-xs text-slate-500 mt-1">
-          💡 O @ será removido automaticamente ao salvar
-        </div>
       </div>
 
       {/* ✅ NOVO - Campo de Observações */}

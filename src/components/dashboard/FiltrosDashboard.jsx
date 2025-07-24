@@ -51,6 +51,29 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     carregarOpcoesFiltros();
   }, []);
 
+  // Proteger contra erros de extensões de navegador
+  useEffect(() => {
+    const handleError = (error) => {
+      // Silenciar erros específicos de extensões de senha
+      if (error.message && (
+        error.message.includes('ControlLooksLikePasswordCredentialField') ||
+        error.message.includes('content_script') ||
+        error.message.includes('password credential')
+      )) {
+        error.preventDefault();
+        return true;
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
+
   const carregarOpcoesFiltros = async () => {
     try {
       const response = await fetch(`${API_BASE}/api/dashboard/filtros`);
@@ -229,152 +252,202 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
   };
 
   const FiltroDropdown = ({ tipo, label, icon: IconComponent, color, placeholder }) => {
-    const selecionados = getSelecionados(tipo);
-    const itensFiltrados = filtrarItens(tipo, busca[tipo]);
-    const totalOpcoes = tipo === 'mandatos' || tipo === 'redutosOrigem' ? opcoes[tipo].length : opcoes[tipo].length;
-    const inputId = `filtro-${tipo}`;
+  const selecionados = getSelecionados(tipo);
+  const itensFiltrados = filtrarItens(tipo, busca[tipo]);
+  const totalOpcoes = tipo === 'mandatos' || tipo === 'redutosOrigem' ? opcoes[tipo].length : opcoes[tipo].length;
+  const inputId = `filtro-${tipo}`;
 
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <label htmlFor={inputId} className="flex items-center space-x-2">
-            <IconComponent className={`w-4 h-4 ${color}`} />
-            <span className="text-sm font-semibold text-slate-700">
-              {label} ({selecionados.length}/{totalOpcoes})
-            </span>
-          </label>
-          <div className="flex space-x-2">
-            <button
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                selecionarTodos(tipo);
-              }}
-              className={`text-xs ${color} hover:opacity-80 font-medium`}
-            >
-              Todos
-            </button>
-            <button
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation(); 
-                limpar(tipo);
-              }}
-              className="text-xs text-slate-600 hover:text-slate-800 font-medium"
-            >
-              Limpar
-            </button>
-          </div>
-        </div>
+  
 
-        {/* Tags dos Selecionados */}
-        {selecionados.length > 0 && (
-          <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
-            {selecionados.map(item => {
-              const nome = typeof item === 'string' ? item : item.nome;
-              const id = typeof item === 'string' ? item : item.id;
-              const colorClass = color.replace('text-', 'bg-').replace('500', '100');
-              const textColorClass = color.replace('text-', 'text-').replace('500', '800');
-              
-              return (
-                <span
-                  key={id}
-                  className={`inline-flex items-center ${colorClass} ${textColorClass} text-xs px-2 py-1 rounded-full h-fit`}
-                >
-                  {nome}
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      removerItem(tipo, id);
-                    }}
-                    className="ml-1 hover:bg-opacity-20 hover:bg-black rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-        )}
+  const handleInputChange = (e) => {
+    try {
+      const valor = e.target.value;
+      
+      // Atualizar o estado de busca sem interferir no foco
+      setBusca(prev => ({
+        ...prev,
+        [tipo]: valor
+      }));
+      
+      // Garantir que o dropdown esteja aberto durante a digitação
+      setDropdownAberto(prev => ({ 
+        ...prev, 
+        [tipo]: true 
+      }));
+      setTimeout(() => {
+        const input = document.getElementById(inputId);
+        if (input && typeof input.focus === 'function') {
+          input.focus();
+        }
+      }, 0);
+    } catch (error) {
+      console.warn('Erro no handleInputChange:', error);
+      // Fallback silencioso para evitar quebrar a funcionalidade
+    }
+  };
 
-        {/* Dropdown */}
-        <div className="relative" ref={refs[tipo]}>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <input
-              id={inputId}
-              name={inputId}
-              type="text"
-              placeholder={placeholder}
-              value={busca[tipo]}
-              onChange={(e) => setBusca({ ...busca, [tipo]: e.target.value })}
-              onFocus={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))}
-              onClick={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
-            />
-          </div>
+  const handleInputFocus = (e) => {
+    try {
+      // Não usar preventDefault nem stopPropagation para permitir digitação natural
+      setDropdownAberto(prev => ({ 
+        ...prev, 
+        [tipo]: true 
+      }));
+      // Focar no input para permitir digitação imediata
+      setTimeout(() => {
+        const input = document.getElementById(inputId);
+        if (input && typeof input.focus === 'function') {
+          input.focus();
+        }
+      }, 0);
+    } catch (error) {
+      console.warn('Erro no handleInputFocus:', error);
+    }
+  };
 
-          {dropdownAberto[tipo] && (
-            <div 
-              className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
-              style={{ zIndex: 1000 }}
-            >
-              {itensFiltrados.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-slate-500">
-                  Nenhum item encontrado
-                </div>
-              ) : (
-                itensFiltrados.map(item => {
-                  const nome = typeof item === 'string' ? item : item.nome;
-                  const id = typeof item === 'string' ? item : item.id;
-                  const subtitle = typeof item === 'object' ? 
-                    (item.nivel || (item.cargo && `${item.cargo.nome} (${item.cargo.nivel})`)) : null;
-                  
-                  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
-                                   tipo === 'cargos' ? 'cargoIds' :
-                                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
-                                   tipo === 'mandatos' ? 'mandatos' :
-                                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
-                                   'macrorregiaoIds';
-                  
-                  const isSelected = filtros[campoArray].includes(id);
-                  
-                  return (
-                    <div
-                      key={id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleItem(tipo, id);
-                      }}
-                      className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
-                    >
-                      <div className="flex items-center justify-center w-4 h-4">
-                        {isSelected && (
-                          <Check className={`w-4 h-4 ${color}`} />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
-                          {nome}
-                        </div>
-                        {subtitle && (
-                          <div className="text-xs text-slate-500">
-                            {subtitle}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          )}
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <label htmlFor={inputId} className="flex items-center space-x-2">
+          <IconComponent className={`w-4 h-4 ${color}`} />
+          <span className="text-sm font-semibold text-slate-700">
+            {label} ({selecionados.length}/{totalOpcoes})
+          </span>
+        </label>
+        <div className="flex space-x-2">
+          <button
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              selecionarTodos(tipo);
+            }}
+            className={`text-xs ${color} hover:opacity-80 font-medium`}
+          >
+            Todos
+          </button>
+          <button
+            onMouseDown={(e) => {
+              e.stopPropagation(); 
+              limpar(tipo);
+            }}
+            className="text-xs text-slate-600 hover:text-slate-800 font-medium"
+          >
+            Limpar
+          </button>
         </div>
       </div>
-    );
-  };
+
+      {/* Tags dos Selecionados */}
+      {selecionados.length > 0 && (
+        <div className="flex flex-wrap gap-2 h-16 overflow-y-auto p-2 bg-slate-50 rounded-lg">
+          {selecionados.map(item => {
+            const nome = typeof item === 'string' ? item : item.nome;
+            const id = typeof item === 'string' ? item : item.id;
+            const colorClass = color.replace('text-', 'bg-').replace('500', '100');
+            const textColorClass = color.replace('text-', 'text-').replace('500', '800');
+            
+            return (
+              <span
+                key={id}
+                className={`inline-flex items-center ${colorClass} ${textColorClass} text-xs px-2 py-1 rounded-full h-fit`}
+              >
+                {nome}
+                <button
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    removerItem(tipo, id);
+                  }}
+                  className="ml-1 hover:bg-opacity-20 hover:bg-black rounded-full p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Dropdown */}
+      <div className="relative" ref={refs[tipo]}>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            id={inputId}
+            name={inputId}
+            type="text"
+            placeholder={placeholder}
+            value={busca[tipo] || ''} // Garantir que nunca seja undefined
+            onChange={handleInputChange}
+            //onFocus={handleInputFocus}
+            onClick={handleInputFocus}
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
+            autoComplete="off" // Prevenir autocomplete do browser
+            data-lpignore="true" // LastPass ignore
+            data-1p-ignore="true" // 1Password ignore
+            data-bwignore="true" // Bitwarden ignore
+            data-form-type="search" // Indicar que é um campo de busca
+            spellCheck="false" // Desabilitar corretor ortográfico
+          />
+        </div>
+
+        {dropdownAberto[tipo] && (
+          <div 
+            className="absolute w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-2xl max-h-48 overflow-y-auto"
+            style={{ zIndex: 1000 }}
+          >
+            {itensFiltrados.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-slate-500">
+                {busca[tipo] ? 'Nenhum item encontrado' : 'Digite para buscar...'}
+              </div>
+            ) : (
+              itensFiltrados.map(item => {
+                const nome = typeof item === 'string' ? item : item.nome;
+                const id = typeof item === 'string' ? item : item.id;
+                const subtitle = typeof item === 'object' ? 
+                  (item.nivel || (item.cargo && `${item.cargo.nome} (${item.cargo.nivel})`)) : null;
+                
+                const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                                 tipo === 'cargos' ? 'cargoIds' :
+                                 tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                                 tipo === 'mandatos' ? 'mandatos' :
+                                 tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                                 'macrorregiaoIds';
+                
+                const isSelected = filtros[campoArray].includes(id);
+                
+                return (
+                  <div
+                    key={id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleItem(tipo, id);
+                    }}
+                    className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-center w-4 h-4">
+                      {isSelected && (
+                        <Check className={`w-4 h-4 ${color}`} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-900 truncate">
+                        {nome}
+                      </div>
+                      {subtitle && (
+                        <div className="text-xs text-slate-500">
+                          {subtitle}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
   if (loading) {
     return (

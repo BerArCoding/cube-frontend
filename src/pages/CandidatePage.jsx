@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CandidateAvatar from '../components/CandidateAvatar';
 import { FolderOpen } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth.jsx';
 import { 
   ArrowLeft, 
   Download, 
@@ -24,12 +25,17 @@ import {
   Eye,
   RefreshCw,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  Plus,
+  X,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const CandidatePage = () => {
+  const { user, logout, isAdmin } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [candidato, setCandidato] = useState(null);
@@ -46,6 +52,132 @@ const CandidatePage = () => {
   const [hoveredNews, setHoveredNews] = useState(null);
   const [showMoreNews, setShowMoreNews] = useState(5);
   const [loadingMoreNews, setLoadingMoreNews] = useState(false);
+  const [insights, setInsights] = useState([]);
+const [loadingInsights, setLoadingInsights] = useState(false);
+const [showCreateInsight, setShowCreateInsight] = useState(false);
+const [editingInsight, setEditingInsight] = useState(null);
+const [newInsight, setNewInsight] = useState({ titulo: '', conteudo: '' });
+const [insightsPage, setInsightsPage] = useState(1);
+const [insightsTotal, setInsightsTotal] = useState(0);
+const [deletingInsight, setDeletingInsight] = useState(null);
+
+// Adicionar esta função para carregar insights
+const carregarInsights = async (page = 1) => {
+  try {
+    setLoadingInsights(true);
+    const token = localStorage.getItem('cube_token');
+    const response = await fetch(
+      `${API_BASE}/api/candidates/${id}/insights?page=${page}&limit=10&orderBy=criadoEm&order=desc`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      setInsights(data.data.insights || data.insights || []);
+      setInsightsTotal(data.pagination.total || 0);
+      setInsightsPage(page);
+    }
+  } catch (err) {
+    console.error('Erro ao carregar insights:', err);
+  } finally {
+    setLoadingInsights(false);
+  }
+};
+
+// Adicionar esta função para criar insight
+const criarInsight = async () => {
+  if (!newInsight.titulo.trim() || !newInsight.conteudo.trim()) {
+    alert('Por favor, preencha título e conteúdo');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('cube_token');
+    const response = await fetch(`${API_BASE}/api/candidates/${id}/insights`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newInsight)
+    });
+
+    if (response.ok) {
+      setNewInsight({ titulo: '', conteudo: '' });
+      setShowCreateInsight(false);
+      await carregarInsights(1);
+    } else {
+      alert('Erro ao criar insight');
+    }
+  } catch (err) {
+    console.error('Erro ao criar insight:', err);
+    alert('Erro ao criar insight');
+  }
+};
+
+// Adicionar esta função para atualizar insight
+const atualizarInsight = async (insightId, dados) => {
+  try {
+    const token = localStorage.getItem('cube_token');
+    const response = await fetch(`${API_BASE}/api/candidates/${id}/insights/${insightId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
+
+    if (response.ok) {
+      setEditingInsight(null);
+      await carregarInsights(insightsPage);
+    } else {
+      alert('Erro ao atualizar insight');
+    }
+  } catch (err) {
+    console.error('Erro ao atualizar insight:', err);
+    alert('Erro ao atualizar insight');
+  }
+};
+
+// Adicionar esta função para deletar insight
+const deletarInsight = async (insightId) => {
+  if (!confirm('Tem certeza que deseja deletar este insight?')) return;
+
+  try {
+    setDeletingInsight(insightId);
+    const token = localStorage.getItem('cube_token');
+    const response = await fetch(`${API_BASE}/api/candidates/${id}/insights/${insightId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      await carregarInsights(insightsPage);
+    } else {
+      alert('Erro ao deletar insight');
+    }
+  } catch (err) {
+    console.error('Erro ao deletar insight:', err);
+    alert('Erro ao deletar insight');
+  } finally {
+    setDeletingInsight(null);
+  }
+};
+
+// Adicionar no useEffect após carregarDadosCandidato
+useEffect(() => {
+  if (candidato) {
+    carregarInsights();
+  }
+}, [candidato]);
 
   useEffect(() => {
     carregarDadosCandidato();
@@ -631,26 +763,277 @@ const CandidatePage = () => {
           )}
         </div>
 
-        {/* Recomendações - Full Width */}
-        <div className="bg-gray-200 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">RECOMENDAÇÕES ESTRATÉGICAS</h2>
-          
-          {candidato.insights && candidato.insights.length > 0 ? (
+        {/* Recomendações Estratégicas - Full Width */}
+<div className="bg-gray-200 rounded-2xl p-6 mb-8">
+  <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center space-x-3">
+      <h2 className="text-xl font-bold text-gray-900">RECOMENDAÇÕES ESTRATÉGICAS</h2>
+      <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">
+        {insightsTotal} insights
+      </span>
+    </div>
+    
+    {isAdmin()  && (
+      <button
+      onClick={() => setShowCreateInsight(true)}
+      className="flex items-center space-x-2 bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
+    >
+      <Plus className="w-4 h-4" />
+      <span>Novo Insight</span>
+    </button>
+    )}
+    
+  </div>
+
+  {/* Formulário de Criação */}
+  {showCreateInsight && (
+    <div className="bg-white rounded-xl p-6 mb-6 border border-gray-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Criar Novo Insight</h3>
+        <button
+          onClick={() => {
+            setShowCreateInsight(false);
+            setNewInsight({ titulo: '', conteudo: '' });
+          }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Título do Insight
+          </label>
+          <input
+            type="text"
+            value={newInsight.titulo}
+            onChange={(e) => setNewInsight(prev => ({ ...prev, titulo: e.target.value }))}
+            placeholder="Ex: Estratégia de Redes Sociais"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Conteúdo
+          </label>
+          <textarea
+            value={newInsight.conteudo}
+            onChange={(e) => setNewInsight(prev => ({ ...prev, conteudo: e.target.value }))}
+            placeholder="Descreva a recomendação estratégica..."
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={() => {
+              setShowCreateInsight(false);
+              setNewInsight({ titulo: '', conteudo: '' });
+            }}
+            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={criarInsight}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Criar Insight
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Loading */}
+  {loadingInsights && (
+    <div className="text-center py-8">
+      <div className="flex items-center justify-center space-x-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+        <span className="text-gray-600">Carregando insights...</span>
+      </div>
+    </div>
+  )}
+
+  {/* Lista de Insights */}
+  {!loadingInsights && insights.length > 0 && (
+    <div className="space-y-4">
+      {insights.map((insight) => (
+        <div key={insight.id} className="bg-white rounded-xl p-6 border border-gray-200 hover:border-blue-300 transition-all duration-200">
+          {editingInsight?.id === insight.id ? (
+            // Modo de Edição
             <div className="space-y-4">
-              {candidato.insights.slice(0, 3).map((insight, index) => (
-                <div key={insight.id}>
-                  <h3 className="font-semibold text-gray-800 mb-2">{insight.titulo}</h3>
-                  <p className="text-sm text-gray-600">{insight.conteudo}</p>
-                </div>
-              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={editingInsight.titulo}
+                  onChange={(e) => setEditingInsight(prev => ({ ...prev, titulo: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Conteúdo
+                </label>
+                <textarea
+                  value={editingInsight.conteudo}
+                  onChange={(e) => setEditingInsight(prev => ({ ...prev, conteudo: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setEditingInsight(null)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => atualizarInsight(insight.id, {
+                    titulo: editingInsight.titulo,
+                    conteudo: editingInsight.conteudo
+                  })}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Salvar
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="text-center text-gray-500">
-              <Target className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma recomendação disponível</p>
-            </div>
+            // Modo de Visualização
+            <>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{insight.titulo}</h3>
+                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+                      Insight
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">{insight.conteudo}</p>
+                </div>
+                
+                {isAdmin() && (
+                  <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    onClick={() => setEditingInsight({ ...insight })}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar insight"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deletarInsight(insight.id)}
+                    disabled={deletingInsight === insight.id}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Deletar insight"
+                  >
+                    {deletingInsight === insight.id ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                )}
+                
+              </div>
+              
+              {/* Meta informações */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>
+                      {insight.criadoEm ? 
+                        new Date(insight.criadoEm).toLocaleDateString('pt-BR') : 
+                        'Data não disponível'
+                      }
+                    </span>
+                  </div>
+                  {insight.atualizadoEm && insight.atualizadoEm !== insight.criadoEm && (
+                    <div className="flex items-center space-x-1">
+                      <RefreshCw className="w-3 h-3" />
+                      <span>
+                        Atualizado em {new Date(insight.atualizadoEm).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-1 text-xs text-gray-400">
+                  <Target className="w-3 h-3" />
+                  <span>Estratégico</span>
+                </div>
+              </div>
+            </>
           )}
         </div>
+      ))}
+    </div>
+  )}
+
+  {/* Paginação */}
+  {!loadingInsights && insights.length > 0 && insightsTotal > 10 && (
+    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-300">
+      <div className="text-sm text-gray-600">
+        Mostrando {((insightsPage - 1) * 10) + 1} a {Math.min(insightsPage * 10, insightsTotal)} de {insightsTotal} insights
+      </div>
+      
+      <div className="flex space-x-2">
+        <button
+          onClick={() => carregarInsights(insightsPage - 1)}
+          disabled={insightsPage <= 1}
+          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Anterior
+        </button>
+        <span className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">
+          {insightsPage}
+        </span>
+        <button
+          onClick={() => carregarInsights(insightsPage + 1)}
+          disabled={insightsPage * 10 >= insightsTotal}
+          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  )}
+
+  {/* Estado vazio */}
+  {!loadingInsights && insights.length === 0 && (
+    <div className="text-center text-gray-500 py-12">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Target className="w-8 h-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">
+        Nenhum insight estratégico
+      </h3>
+      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
+        Crie recomendações estratégicas para ajudar na campanha do candidato.
+      </p>
+      <button
+        onClick={() => setShowCreateInsight(true)}
+        className="inline-flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+      >
+        <Plus className="w-4 h-4" />
+        <span>Criar Primeiro Insight</span>
+      </button>
+    </div>
+  )}
+</div>
 
         {/* ✅ NOVA SEÇÃO - Notícias RSS */}
         <div className="bg-gray-200 rounded-2xl p-6">
@@ -677,7 +1060,7 @@ const CandidatePage = () => {
                 <button
                   onClick={() => fetchCandidateNews()}
                   disabled={loadingNoticias}
-                  className="flex items-center space-x-2 px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                  className="flex items-center space-x-2 px-3 py-1 text-sm bg-orange-400 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${loadingNoticias ? 'animate-spin' : ''}`} />
                   <span>Atualizar</span>

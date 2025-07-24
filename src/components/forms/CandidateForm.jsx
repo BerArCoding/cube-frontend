@@ -28,7 +28,9 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
     instagramHandle: '',
     observacoes: '',
     votosNecessarios: '',
-    mandato: ''
+    mandato: '',
+    urlRss: '',
+    urlDrive: ''
   });
 
   const [cargos, setCargos] = useState([]);
@@ -65,7 +67,9 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
         instagramHandle: initialData.instagramHandle || '',
         observacoes: initialData.observacoes || '',
         votosNecessarios: initialData.votosNecessarios?.toString() || '',
-        mandato: initialData.mandato || ''
+        mandato: initialData.mandato || '',
+        urlRss: initialData.urlRss || '',
+        urlDrive: initialData.urlDrive || ''
       });
     }
   }, [initialData]);
@@ -205,7 +209,9 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
       instagramHandle: cleanInstagram,
       observacoes: formData.observacoes.trim() || null,
       votosNecessarios: formData.votosNecessarios ? parseInt(formData.votosNecessarios) : null,
-      mandato: formData.mandato.trim() || null
+      mandato: formData.mandato.trim() || null,
+      urlRss: formData.urlRss.trim() || null,
+      urlDrive: formData.urlDrive?.trim() || null
     };
 
     console.log('📤 Enviando dados:', candidateData);
@@ -705,6 +711,34 @@ const CandidateForm = ({ onSubmit, initialData = null, isLoading = false }) => {
           icon={Instagram}
         />
       </div>
+      <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            URL RSS
+          </label>
+          <Input
+            type="url"
+            placeholder="https://exemplo.com/feed.rss"
+            value={formData.urlRss}
+            onChange={handleInputChange('urlRss')}
+          />
+          <div className="text-xs text-slate-500 mt-1">
+            URL do feed RSS para acompanhamento de notícias do candidato
+          </div>
+        </div>
+      <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            URL Drive
+          </label>
+          <Input
+            type="url"
+            placeholder="https://exemplo.com"
+            value={formData.urlDrive}
+            onChange={handleInputChange('urlDrive')}
+          />
+          <div className="text-xs text-slate-500 mt-1">
+            URL da pasta no Drive
+          </div>
+        </div>
 
       {/* ✅ NOVO - Campo de Observações */}
       <div>

@@ -158,15 +158,15 @@ const Dashboard = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
             <div>
               <div className="flex items-center space-x-3 mb-2">
-                <h2 className="text-2xl font-bold text-slate-700">
-                  Dashboard de Análise Política
-                </h2>
                 <img 
                   src="/logoPP.png" 
                   alt="Logo PP" 
-                  className="h-16 w-auto"
+                  className="h-20 w-auto"
                   style={{ maxHeight: '80px' }}
                 />
+                <h2 className="text-2xl font-bold text-slate-700">
+                  Dashboard de Análise Política
+                </h2>
               </div>
               <p className="text-slate-500">
                 Acompanhe métricas, viabilidade e engajamento em tempo real

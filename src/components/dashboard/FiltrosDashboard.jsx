@@ -86,28 +86,32 @@ const FiltrosDashboard = ({ onFiltroChange }) => {
     }
   };
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    // Só fechar se não clicou em nenhum dropdown
-    const clickedInDropdown = Object.values(refs).some(ref => 
-      ref.current?.contains(event.target)
-    );
-    
-    if (!clickedInDropdown) {
-      setDropdownAberto({
-        candidatos: false,
-        cargos: false,
-        cargosPretendidos: false,
-        mandatos: false,
-        redutosOrigem: false,
-        macrorregioes: false
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Verificar se o clique foi fora de TODOS os dropdowns
+      const clickedOutsideAll = Object.entries(refs).every(([tipo, ref]) => {
+        const container = ref.current;
+        if (!container) return true;
+        
+        // Verificar se clicou dentro do container do dropdown (incluindo input e lista)
+        return !container.contains(event.target);
       });
-    }
-  };
+      
+      if (clickedOutsideAll) {
+        setDropdownAberto({
+          candidatos: false,
+          cargos: false,
+          cargosPretendidos: false,
+          mandatos: false,
+          redutosOrigem: false,
+          macrorregioes: false
+        });
+      }
+    };
 
-  document.addEventListener('mousedown', handleClickOutside);
-  return () => document.removeEventListener('mousedown', handleClickOutside);
-}, []);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const updateFiltros = (newFiltros) => {
     setFiltros(newFiltros);
@@ -147,39 +151,39 @@ useEffect(() => {
     updateFiltros(novosFiltros);
   };
 
-const selecionarTodos = (tipo) => {
-  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
-                   tipo === 'cargos' ? 'cargoIds' :
-                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
-                   tipo === 'mandatos' ? 'mandatos' :
-                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
-                   'macrorregiaoIds';
-  
-  let todosIds = [];
-  
-  if (tipo === 'mandatos') {
-    todosIds = [...opcoes.mandatos];
-  } else if (tipo === 'redutosOrigem') {
-    todosIds = [...opcoes.redutosOrigem];
-  } else {
-    todosIds = opcoes[tipo].map(item => item.id);
-  }
-  
-  const novosFiltros = { ...filtros, [campoArray]: todosIds };
-  updateFiltros(novosFiltros);
-};
+  const selecionarTodos = (tipo) => {
+    const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                     tipo === 'cargos' ? 'cargoIds' :
+                     tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                     tipo === 'mandatos' ? 'mandatos' :
+                     tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                     'macrorregiaoIds';
+    
+    let todosIds = [];
+    
+    if (tipo === 'mandatos') {
+      todosIds = [...opcoes.mandatos];
+    } else if (tipo === 'redutosOrigem') {
+      todosIds = [...opcoes.redutosOrigem];
+    } else {
+      todosIds = opcoes[tipo].map(item => item.id);
+    }
+    
+    const novosFiltros = { ...filtros, [campoArray]: todosIds };
+    updateFiltros(novosFiltros);
+  };
 
-const limpar = (tipo) => {
-  const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
-                   tipo === 'cargos' ? 'cargoIds' :
-                   tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
-                   tipo === 'mandatos' ? 'mandatos' :
-                   tipo === 'redutosOrigem' ? 'redutosOrigem' :
-                   'macrorregiaoIds';
-  
-  const novosFiltros = { ...filtros, [campoArray]: [] };
-  updateFiltros(novosFiltros);
-};
+  const limpar = (tipo) => {
+    const campoArray = tipo === 'candidatos' ? 'candidatoIds' :
+                     tipo === 'cargos' ? 'cargoIds' :
+                     tipo === 'cargosPretendidos' ? 'cargoPretendidoIds' :
+                     tipo === 'mandatos' ? 'mandatos' :
+                     tipo === 'redutosOrigem' ? 'redutosOrigem' :
+                     'macrorregiaoIds';
+    
+    const novosFiltros = { ...filtros, [campoArray]: [] };
+    updateFiltros(novosFiltros);
+  };
 
   // Função para filtrar itens pela busca
   const filtrarItens = (tipo, termoBusca) => {
@@ -228,11 +232,12 @@ const limpar = (tipo) => {
     const selecionados = getSelecionados(tipo);
     const itensFiltrados = filtrarItens(tipo, busca[tipo]);
     const totalOpcoes = tipo === 'mandatos' || tipo === 'redutosOrigem' ? opcoes[tipo].length : opcoes[tipo].length;
+    const inputId = `filtro-${tipo}`;
 
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="flex items-center space-x-2">
+          <label htmlFor={inputId} className="flex items-center space-x-2">
             <IconComponent className={`w-4 h-4 ${color}`} />
             <span className="text-sm font-semibold text-slate-700">
               {label} ({selecionados.length}/{totalOpcoes})
@@ -241,8 +246,8 @@ const limpar = (tipo) => {
           <div className="flex space-x-2">
             <button
               onMouseDown={(e) => {
-                e.preventDefault(); // ✅ Prevenir o foco
-                e.stopPropagation(); // ✅ Parar propagação do evento
+                e.preventDefault();
+                e.stopPropagation();
                 selecionarTodos(tipo);
               }}
               className={`text-xs ${color} hover:opacity-80 font-medium`}
@@ -296,14 +301,16 @@ const limpar = (tipo) => {
         {/* Dropdown */}
         <div className="relative" ref={refs[tipo]}>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
+              id={inputId}
+              name={inputId}
               type="text"
               placeholder={placeholder}
               value={busca[tipo]}
               onChange={(e) => setBusca({ ...busca, [tipo]: e.target.value })}
               onFocus={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))}
-              onClick={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))} // ✅ ADICIONAR
+              onClick={() => setDropdownAberto(prev => ({ ...prev, [tipo]: true }))}
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF943A] focus:border-[#FF943A] transition-colors"
             />
           </div>
@@ -336,7 +343,11 @@ const limpar = (tipo) => {
                   return (
                     <div
                       key={id}
-                      onClick={() => toggleItem(tipo, id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleItem(tipo, id);
+                      }}
                       className="flex items-center space-x-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
                     >
                       <div className="flex items-center justify-center w-4 h-4">

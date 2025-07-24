@@ -11,7 +11,11 @@ import {
   Eye,
   Target,
   MapPin,
-  AtSign
+  AtSign,
+  Filter,
+  X,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CandidateAvatar from './CandidateAvatar';
@@ -25,7 +29,18 @@ const TabelaCandidatos = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'followersCount', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
+
+  // Estados dos filtros simplificados
+  const [filters, setFilters] = useState({
+    cargoAtual: [],
+    cargoPretendido: [],
+    macrorregiao: [],
+    viabilidade: [],
+    verified: null, // null = todos, true = verificados, false = não verificados
+    hasInstagram: null // null = todos, true = tem Instagram, false = não tem
+  });
 
   // ✅ Funções utilitárias
   const getNestedValue = (obj, path) => {
@@ -94,19 +109,70 @@ const TabelaCandidatos = () => {
     }
   };
 
-  // Filtrar candidatos por busca
+  // Extrair opções únicas para os filtros
+  const filterOptions = useMemo(() => {
+    if (!candidatos || candidatos.length === 0) return {};
+
+    return {
+      cargoAtual: [...new Set(candidatos.map(c => c.cargo?.nome).filter(Boolean))].sort(),
+      cargoPretendido: [...new Set(candidatos.map(c => c.cargoPretendido?.nome).filter(Boolean))].sort(),
+      macrorregiao: [...new Set(candidatos.map(c => c.macrorregiao?.nome).filter(Boolean))].sort(),
+      viabilidade: [...new Set(candidatos.map(c => c.viabilidades?.[0]?.categoria).filter(Boolean))].sort()
+    };
+  }, [candidatos]);
+
+  // Aplicar filtros
   const candidatosFiltrados = useMemo(() => {
     if (!candidatos || candidatos.length === 0) return [];
     
-    return candidatos.filter(candidato =>
-      candidato?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.instagramHandle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.cargo?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.cargoPretendido?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidato?.redutoOrigem?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [candidatos, searchTerm]);
+    let filtered = candidatos.filter(candidato => {
+      // Filtro de busca textual
+      const matchesSearch = 
+        candidato?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidato?.instagramHandle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidato?.cargo?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidato?.cargoPretendido?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidato?.macrorregiao?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidato?.redutoOrigem?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      // Filtro de cargo atual
+      if (filters.cargoAtual.length > 0 && !filters.cargoAtual.includes(candidato.cargo?.nome)) {
+        return false;
+      }
+
+      // Filtro de cargo pretendido
+      if (filters.cargoPretendido.length > 0 && !filters.cargoPretendido.includes(candidato.cargoPretendido?.nome)) {
+        return false;
+      }
+
+      // Filtro de macrorregião
+      if (filters.macrorregiao.length > 0 && !filters.macrorregiao.includes(candidato.macrorregiao?.nome)) {
+        return false;
+      }
+
+      // Filtro de viabilidade
+      if (filters.viabilidade.length > 0 && !filters.viabilidade.includes(candidato.viabilidades?.[0]?.categoria)) {
+        return false;
+      }
+
+      // Filtro de verificado
+      if (filters.verified !== null && candidato.verified !== filters.verified) {
+        return false;
+      }
+
+      // Filtro de tem Instagram
+      if (filters.hasInstagram !== null) {
+        const hasInsta = Boolean(candidato.instagramHandle);
+        if (hasInsta !== filters.hasInstagram) return false;
+      }
+
+      return true;
+    });
+
+    return filtered;
+  }, [candidatos, searchTerm, filters]);
 
   // Ordenar candidatos
   const candidatosOrdenados = useMemo(() => {
@@ -151,6 +217,50 @@ const TabelaCandidatos = () => {
     setCurrentPage(page);
   };
 
+  // Funções de filtro
+  const handleCheckboxFilter = (filterType, value) => {
+    setFilters(prev => {
+      const currentValues = prev[filterType];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      
+      return { ...prev, [filterType]: newValues };
+    });
+    setCurrentPage(1);
+  };
+
+  const handleBooleanFilter = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: prev[filterType] === value ? null : value
+    }));
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      cargoAtual: [],
+      cargoPretendido: [],
+      macrorregiao: [],
+      viabilidade: [],
+      verified: null,
+      hasInstagram: null
+    });
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = () => {
+    return (
+      filters.cargoAtual.length > 0 ||
+      filters.cargoPretendido.length > 0 ||
+      filters.macrorregiao.length > 0 ||
+      filters.viabilidade.length > 0 ||
+      filters.verified !== null ||
+      filters.hasInstagram !== null
+    );
+  };
+
   // ✅ Componente SortableHeader
   const SortableHeader = ({ children, sortKey, className = "" }) => (
     <th 
@@ -166,6 +276,67 @@ const TabelaCandidatos = () => {
         )}
       </div>
     </th>
+  );
+
+  // ✅ Componente CheckboxFilter Melhorado
+  const CheckboxFilter = ({ label, options, selected, onChange, icon: Icon }) => (
+    <div className="space-y-3">
+      <div className="flex items-center space-x-2">
+        {Icon && <Icon className="w-4 h-4 text-orange-500" />}
+        <label className="text-sm font-medium text-gray-900">{label}</label>
+      </div>
+      <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-lg bg-white">
+        <div className="p-2 space-y-2">
+          {options.map(option => (
+            <label key={option} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+              <div 
+                className="flex items-center"
+                onClick={() => onChange(option)}
+              >
+                {selected.includes(option) ? (
+                  <CheckSquare className="w-4 h-4 text-orange-500" />
+                ) : (
+                  <Square className="w-4 h-4 text-gray-400" />
+                )}
+              </div>
+              <span className="text-sm text-gray-700 flex-1">{option}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ✅ Componente BooleanFilter Melhorado
+  const BooleanFilter = ({ label, value, onChange, trueLabel, falseLabel, icon: Icon }) => (
+    <div className="space-y-3">
+      <div className="flex items-center space-x-2">
+        {Icon && <Icon className="w-4 h-4 text-orange-500" />}
+        <label className="text-sm font-medium text-gray-900">{label}</label>
+      </div>
+      <div className="border border-gray-200 rounded-lg bg-white p-3 space-y-2">
+        <label className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+          <div onClick={() => onChange(true)}>
+            {value === true ? (
+              <CheckSquare className="w-4 h-4 text-orange-500" />
+            ) : (
+              <Square className="w-4 h-4 text-gray-400" />
+            )}
+          </div>
+          <span className="text-sm text-gray-700">{trueLabel}</span>
+        </label>
+        <label className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+          <div onClick={() => onChange(false)}>
+            {value === false ? (
+              <CheckSquare className="w-4 h-4 text-orange-500" />
+            ) : (
+              <Square className="w-4 h-4 text-gray-400" />
+            )}
+          </div>
+          <span className="text-sm text-gray-700">{falseLabel}</span>
+        </label>
+      </div>
+    </div>
   );
 
   if (loading) {
@@ -191,27 +362,141 @@ const TabelaCandidatos = () => {
             </h3>
             <p className="text-sm text-gray-500 mt-1">
               {candidatosOrdenados.length} candidatos encontrados de {candidatos.length} total
+              {hasActiveFilters() && (
+                <span className="ml-2 text-orange-600 font-medium">
+                  (filtros aplicados)
+                </span>
+              )}
             </p>
           </div>
           
-          {/* Busca */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
+          <div className="flex items-center space-x-3">
+            {/* Busca */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar candidatos..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Buscar candidatos..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset para página 1 ao buscar
-              }}
-              className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            />
+
+            {/* Botão de Filtros */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                showFilters || hasActiveFilters()
+                  ? 'bg-orange-50 border-orange-300 text-orange-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filtros</span>
+              {hasActiveFilters() && (
+                <span className="bg-orange-500 text-white text-xs rounded-full px-2 py-0.5">
+                  Ativo
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Painel de Filtros */}
+      {showFilters && (
+        <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-orange-50/30">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                <Filter className="w-5 h-5 text-orange-500" />
+                <span>Filtros Avançados</span>
+              </h4>
+              <div className="flex items-center space-x-3">
+                {hasActiveFilters() && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="flex items-center space-x-1 text-sm text-orange-600 hover:text-orange-800 font-medium px-3 py-1 bg-white rounded-md border border-orange-200 hover:bg-orange-50 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Limpar Filtros</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Filtro Cargo Atual */}
+              <CheckboxFilter
+                label="Cargo Atual"
+                icon={Users}
+                options={filterOptions.cargoAtual || []}
+                selected={filters.cargoAtual}
+                onChange={(value) => handleCheckboxFilter('cargoAtual', value)}
+              />
+
+              {/* Filtro Cargo Pretendido */}
+              <CheckboxFilter
+                label="Cargo Pretendido"
+                icon={Target}
+                options={filterOptions.cargoPretendido || []}
+                selected={filters.cargoPretendido}
+                onChange={(value) => handleCheckboxFilter('cargoPretendido', value)}
+              />
+
+              {/* Filtro Macrorregião */}
+              <CheckboxFilter
+                label="Macrorregião"
+                icon={MapPin}
+                options={filterOptions.macrorregiao || []}
+                selected={filters.macrorregiao}
+                onChange={(value) => handleCheckboxFilter('macrorregiao', value)}
+              />
+
+              {/* Filtro Viabilidade */}
+              <CheckboxFilter
+                label="Categoria Viabilidade"
+                icon={TrendingUp}
+                options={filterOptions.viabilidade || []}
+                selected={filters.viabilidade}
+                onChange={(value) => handleCheckboxFilter('viabilidade', value)}
+              />
+
+              {/* Filtro Verificado */}
+              <BooleanFilter
+                label="Status Verificação"
+                icon={CheckSquare}
+                value={filters.verified}
+                onChange={(value) => handleBooleanFilter('verified', value)}
+                trueLabel="Verificados"
+                falseLabel="Não Verificados"
+              />
+
+              {/* Filtro Tem Instagram */}
+              <BooleanFilter
+                label="Presença no Instagram"
+                icon={AtSign}
+                value={filters.hasInstagram}
+                onChange={(value) => handleBooleanFilter('hasInstagram', value)}
+                trueLabel="Tem Instagram"
+                falseLabel="Sem Instagram"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabela */}
       <div className="overflow-x-auto">
@@ -410,7 +695,7 @@ const TabelaCandidatos = () => {
             )) : (
               <tr>
                 <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
-                  {searchTerm ? 'Nenhum candidato encontrado para a busca.' : 'Nenhum candidato cadastrado.'}
+                  {searchTerm || hasActiveFilters() ? 'Nenhum candidato encontrado para os filtros aplicados.' : 'Nenhum candidato cadastrado.'}
                 </td>
               </tr>
             )}

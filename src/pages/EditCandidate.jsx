@@ -192,31 +192,7 @@ const EditCandidate = () => {
         </div>
 
         {/* Informações adicionais */}
-        {candidate && (
-          <div className="mt-6 bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <h3 className="text-sm font-medium text-slate-900 mb-2">📋 Informações do Sistema</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
-              <div>
-                <span className="font-medium">Criado em:</span> {' '}
-                {new Date(candidate.criadoEm).toLocaleDateString('pt-BR')}
-              </div>
-              <div>
-                <span className="font-medium">Atualizado em:</span> {' '}
-                {new Date(candidate.atualizadoEm || candidate.criadoEm).toLocaleDateString('pt-BR')}
-              </div>
-              <div>
-                <span className="font-medium">Criado por:</span> {' '}
-                {candidate.criador?.nome || 'Sistema'}
-              </div>
-              <div>
-                <span className="font-medium">Status:</span> {' '}
-                <span className={candidate.ativo ? 'text-green-600' : 'text-red-600'}>
-                  {candidate.ativo ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* Debug Info - remover em produção */}
         {/* {import.meta.env.DEV && (

@@ -1022,15 +1022,17 @@ useEffect(() => {
         Nenhum insight estratégico
       </h3>
       <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
-        Crie recomendações estratégicas para ajudar na campanha do candidato.
+        Recomendações estratégicas para ajudar na campanha do candidato.
       </p>
-      <button
+      {isAdmin() && (
+        <button
         onClick={() => setShowCreateInsight(true)}
         className="inline-flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
       >
         <Plus className="w-4 h-4" />
         <span>Criar Primeiro Insight</span>
       </button>
+      )}
     </div>
   )}
 </div>

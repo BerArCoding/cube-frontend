@@ -23,6 +23,10 @@ import RSSAppFeed from '../components/RssAppFeed';
 import TabelaCandidatos from '../components/TabelaCandidatos';
 import styles from '../styles/Dashboard.module.css';
 import FiltrosDashboard from '../components/dashboard/FiltrosDashboard';
+<<<<<<< HEAD
+=======
+import SimuladorCenarios from '../components/dashboard/SimuladorCenarios';
+>>>>>>> c4aa5f5 (correcao e cenarios)
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -301,6 +305,22 @@ const Dashboard = () => {
                   </h3>
                 </div>
                 
+<<<<<<< HEAD
+=======
+                <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <TrendingUp className="w-5 h-5 text-[#FF943A]" />
+                    <h3 className="text-lg font-semibold text-slate-700">
+                      Cenários Eleitorais
+                    </h3>
+                  </div>
+                  <SimuladorCenarios 
+                    filtros={filtrosAtivos}
+                    showTitle={false}
+                  />
+                </div>
+                
+>>>>>>> c4aa5f5 (correcao e cenarios)
                 {/* ✅ LISTA DAS MACRORREGIÕES */}
                 <div className="mb-6">
                   <h4 className="text-sm font-medium text-slate-600 mb-3">Macrorregiões:</h4>

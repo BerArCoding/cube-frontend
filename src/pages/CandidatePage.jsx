@@ -29,10 +29,71 @@ import {
   Plus,
   X,
   Edit2,
-  Trash2
+  Trash2,
+  Activity,
 } from 'lucide-react';
+import SimuladorCenarios from '../components/dashboard/SimuladorCenarios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+  // Componente compacto para métricas com setas de crescimento
+  const MetricaCompacta = ({ icon: IconComponent, color, label, value, historico, campo }) => {
+    const calcularCrescimento = () => {
+      if (!historico || historico.length < 2) return null;
+      
+      const atual = historico[0]?.[campo];
+      const anterior = historico[1]?.[campo];
+      
+      if (!atual || !anterior) return null;
+      
+      const diferenca = atual - anterior;
+      
+      return {
+        diferenca,
+        cresceu: diferenca > 0,
+        diminuiu: diferenca < 0
+      };
+    };
+
+    const crescimento = calcularCrescimento();
+
+    const colorClasses = {
+      blue: 'from-blue-50 to-blue-100 border-blue-200 text-blue-600 text-blue-800 text-blue-900',
+      green: 'from-green-50 to-green-100 border-green-200 text-green-600 text-green-800 text-green-900',
+      orange: 'from-orange-50 to-orange-100 border-orange-200 text-orange-600 text-orange-800 text-orange-900',
+    };
+
+    const [bgClass, iconClass, labelClass, valueClass] = colorClasses[color].split(' ');
+
+    return (
+      <div className={`text-center p-3 bg-gradient-to-br ${bgClass} rounded-lg border ${bgClass.replace('from-', 'border-').replace('-50', '-200').replace(' to-', '').replace('-100', '')}`}>
+        <div className="flex items-center justify-center space-x-1 mb-1">
+          <IconComponent className={`w-4 h-4 ${iconClass}`} />
+          {crescimento && (
+            <div className={`${
+              crescimento.cresceu ? 'text-emerald-500' : 
+              crescimento.diminuiu ? 'text-red-500' : 'text-gray-400'
+            }`}>
+              {crescimento.cresceu && <TrendingUp className="w-3 h-3" />}
+              {crescimento.diminuiu && <TrendingDown className="w-3 h-3" />}
+            </div>
+          )}
+        </div>
+        <div className={`text-xs font-semibold ${labelClass} mb-1`}>{label}</div>
+        <div className={`text-sm font-bold ${valueClass}`}>
+          {value}
+        </div>
+        {crescimento && (
+          <div className={`text-xs font-medium ${
+            crescimento.cresceu ? 'text-emerald-600' : 
+            crescimento.diminuiu ? 'text-red-600' : 'text-gray-500'
+          }`}>
+            {crescimento.cresceu ? '+' : ''}{crescimento.diferenca.toLocaleString()}
+          </div>
+        )}
+      </div>
+    );
+  };
 
 const CandidatePage = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -190,61 +251,65 @@ useEffect(() => {
     }
   }, [candidato]);
 
-  const carregarDadosCandidato = async () => {
-    try {
-      setLoading(true);
-      
-      const token = localStorage.getItem('cube_token');
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      };
+const carregarDadosCandidato = async () => {
+  try {
+    setLoading(true);
+    
+    const token = localStorage.getItem('cube_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
 
-      const [candidatoRes, ultimaPublicacaoRes, analisesSentimentoRes] = await Promise.all([
-        fetch(`${API_BASE}/api/candidates/${id}`, { headers }),
-        fetch(`${API_BASE}/api/dashboard/candidatos`, { headers }),
-        fetch(`${API_BASE}/api/dashboard/nuvem-palavras?candidatos=${id}`, { headers })
-      ]);
+  const [candidatoRes, publicacoesRes, nuvemPalavrasRes, sentimentosRes] = await Promise.all([
+    fetch(`${API_BASE}/api/candidates/${id}`, { headers }),
+    fetch(`${API_BASE}/api/candidates/${id}/publicacoes?limit=1`, { headers }),
+    fetch(`${API_BASE}/api/dashboard/nuvem-palavras?candidatos=${id}`, { headers }),
+    fetch(`${API_BASE}/api/candidates/${id}/sentimentos?limit=20`, { headers })
+  ]);
 
-      if (!candidatoRes.ok) {
-        throw new Error('Candidato não encontrado');
-      }
-
-      const candidatoData = await candidatoRes.json();
-      setCandidato(candidatoData.data);
-      console.log('Candidato carregado:', candidatoData.data);
-      if (ultimaPublicacaoRes.ok) {
-        const todosData = await ultimaPublicacaoRes.json();
-        const candidatoCompleto = todosData.data?.find(c => c.id === id);
-        if (candidatoCompleto && candidatoCompleto.postsCount > 0) {
-          setUltimoPost({
-            type: 'IMAGE',
-            caption: `Último post de ${candidatoCompleto.nome}`,
-            likesCount: Math.round(candidatoCompleto.followersCount * 0.02),
-            commentsCount: Math.round(candidatoCompleto.followersCount * 0.005),
-            url: candidatoCompleto.instagramHandle ? `https://instagram.com/${candidatoCompleto.instagramHandle}` : null
-          });
-        }
-      }
-
-      if (analisesSentimentoRes.ok) {
-        const sentimentoData = await analisesSentimentoRes.json();
-        if (sentimentoData.sucesso && sentimentoData.dados) {
-          setAnalisesSentimento({
-            resumoInsights: {
-              palavrasChave: sentimentoData.dados.palavras?.slice(0, 7).map(p => p.text) || []
-            }
-          });
-        }
-      }
-
-    } catch (err) {
-      console.error('Erro ao carregar candidato:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (!candidatoRes.ok) {
+      throw new Error('Candidato não encontrado');
     }
-  };
+
+    const candidatoData = await candidatoRes.json();
+      setCandidato({
+        ...candidatoData.data,
+
+        historicoSeguidores: candidatoData.data.historicoSeguidores?.slice(0, 2) || []
+      });
+
+    if (publicacoesRes.ok) {
+      const publicacoesData = await publicacoesRes.json();
+      if (publicacoesData.success && publicacoesData.data?.length > 0) {
+        const ultimaPublicacao = publicacoesData.data[0];
+        setUltimoPost(ultimaPublicacao);
+      } else {
+        setUltimoPost(null);
+      }
+    } else {
+      setUltimoPost(null);
+    }
+
+
+  if (sentimentosRes.ok) {
+    const sentimentosData = await sentimentosRes.json();
+    if (sentimentosData.success && sentimentosData.data) {
+      setAnalisesSentimento(sentimentosData.data);
+    } else {
+      setAnalisesSentimento(null);
+    }
+  } else {
+    setAnalisesSentimento(null);
+  }
+
+  } catch (err) {
+    console.error('Erro ao carregar candidato:', err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Função para buscar notícias do RSS do candidato
   const fetchCandidateNews = async (limit = 5) => {
@@ -441,114 +506,153 @@ useEffect(() => {
         <div className="bg-gray-200 rounded-2xl p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">DADOS</h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+          {/* Grid Compacto - Primeira Linha */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">REDUTO DE ORIGEM</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.redutoOrigem || 'Não informado'}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">MACRORREGIÃO</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.macrorregiao?.nome || 'Não informado'}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">CARGO ATUAL</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.cargo?.nome || 'Não informado'}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">VOTOS ÚLTIMA ELEIÇÃO</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.votosUltimaEleicao ? formatNumber(candidato.votosUltimaEleicao) : 'N/A'}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">CARGO PRETENDIDO</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.cargoPretendido?.nome || 'Não informado'}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">VOTOS NECESSÁRIOS</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.votosNecessarios ? formatNumber(candidato.votosNecessarios) : 'N/A'}
               </div>
             </div>
           </div>
 
-          {/* Métricas Instagram */}
-          <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+          {/* Grid Compacto - Segunda Linha (Instagram) */}
+          <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">INSTAGRAM</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center">
                 {candidato.instagramHandle ? `@${candidato.instagramHandle}` : 'N/A'}
               </div>
             </div>
 
+            {/* Seguidores com Indicador */}
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">SEGUIDORES</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
-                <span>{formatNumber(candidato.followersCount)}</span>
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex flex-col items-center justify-center relative">
+                <div className="flex items-center space-x-1">
+                  <span>{formatNumber(candidato.followersCount)}</span>
+                  {candidato.historicoSeguidores?.length >= 2 && (() => {
+                    const atual = candidato.historicoSeguidores[0]?.followersCount;
+                    const anterior = candidato.historicoSeguidores[1]?.followersCount;
+                    if (atual && anterior) {
+                      const cresceu = atual > anterior;
+                      const diminuiu = atual < anterior;
+                      return (
+                        <div className="flex items-center">
+                          {cresceu && <TrendingUp className="w-3 h-3 text-green-300" />}
+                          {diminuiu && <TrendingDown className="w-3 h-3 text-red-300" />}
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+                <div className="text-xs opacity-75">Total Atual</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">Total Atual</div>
             </div>
 
+            {/* Posts com Indicador */}
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">POSTS</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
-                <span>{formatNumber(candidato.postsCount)}</span>
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex flex-col items-center justify-center">
+                <div className="flex items-center space-x-1">
+                  <span>{formatNumber(candidato.postsCount)}</span>
+                  {candidato.historicoSeguidores?.length >= 2 && (() => {
+                    const atual = candidato.historicoSeguidores[0]?.postsCount;
+                    const anterior = candidato.historicoSeguidores[1]?.postsCount;
+                    if (atual && anterior) {
+                      const cresceu = atual > anterior;
+                      const diminuiu = atual < anterior;
+                      return (
+                        <div className="flex items-center">
+                          {cresceu && <TrendingUp className="w-3 h-3 text-green-300" />}
+                          {diminuiu && <TrendingDown className="w-3 h-3 text-red-300" />}
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+                <div className="text-xs opacity-75">Total</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">Total</div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">SEGUINDO</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex flex-col items-center justify-center">
                 <span>{formatNumber(candidato.followsCount)}</span>
+                <div className="text-xs opacity-75">Total</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">Total</div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">ENGAJAMENTO</div>
-              <div className="bg-orange-400 text-white px-3 py-2 rounded-lg text-sm font-medium">
-                {candidato.followersCount && ultimoPost?.likesCount ? 
-                  `${((ultimoPost.likesCount / candidato.followersCount) * 100).toFixed(1)}%` : 
-                  'N/A'
-                }
+              <div className="bg-orange-400 text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex flex-col items-center justify-center">
+                <span>
+                  {candidato.followersCount && ultimoPost?.likesCount ? 
+                    `${((ultimoPost.likesCount / candidato.followersCount) * 100).toFixed(1)}%` : 
+                    'N/A'
+                  }
+                </span>
+                <div className="text-xs opacity-75">Último post</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">Último post</div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">VERIFICADO</div>
-              <div className={`${candidato.verified ? 'bg-blue-500' : 'bg-gray-400'} text-white px-3 py-2 rounded-lg text-sm font-medium`}>
-                {candidato.verified ? '✓ Sim' : '✗ Não'}
+              <div className={`${candidato.verified ? 'bg-orange-400' : 'bg-gray-400'} text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex flex-col items-center justify-center`}>
+                <span>{candidato.verified ? '✓ Sim' : '✗ Não'}</span>
+                <div className="text-xs opacity-75">Instagram</div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">Instagram</div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-semibold text-gray-600 mb-2">VIABILIDADE</div>
-              <div className={`${getViabilidadeColor(candidato.pontuacaoViabilidade)} text-white px-3 py-2 rounded-lg text-sm font-medium`}>
+              <div className={`${getViabilidadeColor(candidato.pontuacaoViabilidade)} text-white px-2 py-2 rounded-lg text-xs font-medium h-12 flex items-center justify-center`}>
                 {candidato.pontuacaoViabilidade ? `${candidato.pontuacaoViabilidade.toFixed(0)}%` : 'N/A'}
               </div>
             </div>
           </div>
 
           {candidato.observacoes && (
-            <div className="border-t border-gray-300 pt-6">
-              <div className="text-xs font-semibold text-gray-600 mb-3">OBSERVAÇÕES</div>
+            <div className="border-t border-gray-300 pt-4 mt-4">
+              <div className="text-xs font-semibold text-gray-600 mb-2">OBSERVAÇÕES</div>
+              <div className="text-sm text-gray-700 bg-white p-3 rounded-lg">
                 {candidato.observacoes}
+              </div>
             </div>
           )}
         </div>
@@ -620,147 +724,599 @@ useEffect(() => {
   )}
 </div>
 
-        {/* Análise Post - Full Width */}
-        <div className="bg-gray-200 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">ANÁLISE POST</h2>
-          
-          {ultimoPost ? (
-            <>
-              <div className="mb-4">
-                <div className="text-sm font-medium text-gray-700 mb-1">
-                  TEMA POST - {ultimoPost.type?.toUpperCase() || 'POST'}
-                </div>
-                <div className="text-xs text-gray-600">
-                  {ultimoPost.caption?.substring(0, 100)}...
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm font-medium text-gray-700 mb-2">ENGAJAMENTO</div>
-                  <div className="bg-orange-400 rounded-lg h-6 relative overflow-hidden">
-                    <div 
-                      className="bg-orange-500 h-full transition-all duration-300"
-                      style={{ 
-                        width: ultimoPost.likesCount && candidato.followersCount ? 
-                          `${Math.min(((ultimoPost.likesCount / candidato.followersCount) * 100), 100)}%` : '0%'
-                      }}
-                    ></div>
-                    <div className="absolute left-2 top-1 text-white text-xs font-medium">
-                      {ultimoPost.likesCount && candidato.followersCount ? 
-                        `${((ultimoPost.likesCount / candidato.followersCount) * 100).toFixed(1)}%` : '0%'}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium text-gray-700 mb-2">COMENTÁRIOS</div>
-                  <div className="bg-orange-400 rounded-lg h-6 relative overflow-hidden">
-                    <div 
-                      className="bg-orange-500 h-full transition-all duration-300"
-                      style={{ 
-                        width: ultimoPost.commentsCount ? 
-                          `${Math.min((ultimoPost.commentsCount / 50) * 100, 100)}%` : '0%'
-                      }}
-                    ></div>
-                    <div className="absolute left-2 top-1 text-white text-xs font-medium">
-                      {ultimoPost.commentsCount || 0} comentários
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {ultimoPost.url && (
-                <div className="mt-4">
-                  <a 
-                    href={ultimoPost.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>Ver post no Instagram</span>
-                  </a>
-                </div>
+{/* Análise Post - Full Width */}
+<div className="bg-gray-200 rounded-2xl p-6 mb-8">
+  <h2 className="text-xl font-bold text-gray-900 mb-6">ANÁLISE DE POSTS</h2>
+  
+  {ultimoPost ? (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      {/* Header do Post */}
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+            <Instagram className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Último Post
+              </h3>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                ultimoPost.type === 'Video' ? 'bg-gray-100 text-gray-700' :
+                ultimoPost.type === 'Sidecar' ? 'bg-gray-100 text-gray-700' :
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {ultimoPost.type === 'Video' ? '🎥 Vídeo' :
+                 ultimoPost.type === 'Sidecar' ? '📸 Carrossel' : '🖼️ Imagem'}
+              </span>
+              {ultimoPost.shortCode && (
+                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-mono">
+                  {ultimoPost.shortCode}
+                </span>
               )}
-            </>
-          ) : (
-            <div className="text-center text-gray-500">
-              <Instagram className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhum post encontrado</p>
             </div>
+            <p className="text-sm text-gray-600">
+              {ultimoPost.timestamp && (
+                <span className="mr-3">
+                  📅 {new Date(ultimoPost.timestamp).toLocaleDateString('pt-BR')}
+                </span>
+              )}
+              {ultimoPost.locationName && (
+                <span className="mr-3">
+                  📍 {ultimoPost.locationName}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {ultimoPost.shortCode && (
+            <a 
+              href={`https://www.instagram.com/p/${ultimoPost.shortCode}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Ver Post</span>
+            </a>
+          )}
+          {ultimoPost.url && (
+            <a 
+              href={ultimoPost.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+            >
+              <Instagram className="w-4 h-4" />
+              <span>Perfil</span>
+            </a>
           )}
         </div>
+      </div>
 
-        {/* Análise Sentimento - Full Width */}
-        <div className="bg-gray-200 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">ANÁLISE SENTIMENTO</h2>
-          
-          {analisesSentimento ? (
-            <>
-              <div className="flex items-center justify-center mb-6">
-                <div className="relative w-32 h-32">
-                  <div className="w-full h-full rounded-full bg-green-500 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-1/5 h-full bg-red-500 transform rotate-45 origin-bottom-left"></div>
-                    <div className="absolute top-0 right-0 w-1/5 h-full bg-gray-400 transform rotate-12 origin-bottom-left"></div>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-white">
-                        {analisesSentimento.sentimentoScore ? 
-                          `${Math.round(analisesSentimento.sentimentoScore * 100)}%` : 
-                          'N/A'
-                        }
-                      </div>
-                    </div>
-                  </div>
+      {/* Legenda do Post */}
+      {ultimoPost.caption && (
+        <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FileText className="w-4 h-4 text-slate-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-slate-700 mb-2">Legenda da Publicação</h4>
+              <p className="text-sm text-slate-600 leading-relaxed line-clamp-4">
+                {ultimoPost.caption}
+              </p>
+              {ultimoPost.caption.length > 200 && (
+                <button className="text-xs text-orange-600 hover:text-orange-700 mt-1">
+                  Ver mais...
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Métricas Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Engajamento */}
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                <Heart className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-slate-800">Engajamento</span>
+            </div>
+            <span className="text-2xl font-bold text-orange-600">
+              {ultimoPost.likesCount && candidato.followersCount ? 
+                `${((ultimoPost.likesCount / candidato.followersCount) * 100).toFixed(1)}%` : '0%'}
+            </span>
+          </div>
+          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className="bg-orange-500 h-full transition-all duration-500 ease-out"
+              style={{ 
+                width: ultimoPost.likesCount && candidato.followersCount ? 
+                  `${Math.min(((ultimoPost.likesCount / candidato.followersCount) * 100), 100)}%` : '0%'
+              }}
+            ></div>
+          </div>
+          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
+            <span>{formatNumber(ultimoPost.likesCount || 0)} likes</span>
+            <span>de {formatNumber(candidato.followersCount || 0)} seguidores</span>
+          </div>
+        </div>
+
+        {/* Comentários */}
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-slate-800">Comentários</span>
+            </div>
+            <span className="text-2xl font-bold text-gray-700">
+              {ultimoPost.commentsCount || 0}
+            </span>
+          </div>
+          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className="bg-gray-600 h-full transition-all duration-500 ease-out"
+              style={{ 
+                width: ultimoPost.commentsCount ? 
+                  `${Math.min((ultimoPost.commentsCount / 100) * 100, 100)}%` : '0%'
+              }}
+            ></div>
+          </div>
+          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
+            <span>Interações ativas</span>
+            <span>{ultimoPost.commentsCount || 0} respostas</span>
+          </div>
+        </div>
+
+        {/* Taxa de Resposta */}
+        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-slate-800">Taxa Resposta</span>
+            </div>
+            <span className="text-2xl font-bold text-slate-700">
+              {ultimoPost.likesCount && ultimoPost.commentsCount ? 
+                `${((ultimoPost.commentsCount / ultimoPost.likesCount) * 100).toFixed(1)}%` : '0%'}
+            </span>
+          </div>
+          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className="bg-slate-600 h-full transition-all duration-500 ease-out"
+              style={{ 
+                width: ultimoPost.likesCount && ultimoPost.commentsCount ? 
+                  `${Math.min(((ultimoPost.commentsCount / ultimoPost.likesCount) * 100 * 10), 100)}%` : '0%'
+              }}
+            ></div>
+          </div>
+          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
+            <span>Comentários/Likes</span>
+            <span>Engajamento ativo</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Detalhes Técnicos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Dados da Publicação */}
+        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center space-x-2">
+            <FileText className="w-4 h-4" />
+            <span>Dados da Publicação</span>
+          </h4>
+          <div className="space-y-2 text-xs text-slate-600">
+            {ultimoPost.instagramPostId && (
+              <div className="flex justify-between">
+                <span>ID do Post:</span>
+                <span className="font-mono text-slate-800">{ultimoPost.instagramPostId.substring(0, 12)}...</span>
+              </div>
+            )}
+            {ultimoPost.type && (
+              <div className="flex justify-between">
+                <span>Tipo:</span>
+                <span className="font-medium">{ultimoPost.type}</span>
+              </div>
+            )}
+            {ultimoPost.dimensionsWidth && ultimoPost.dimensionsHeight && (
+              <div className="flex justify-between">
+                <span>Dimensões:</span>
+                <span className="font-medium">{ultimoPost.dimensionsWidth}x{ultimoPost.dimensionsHeight}px</span>
+              </div>
+            )}
+            {ultimoPost.isCommentsDisabled !== undefined && (
+              <div className="flex justify-between">
+                <span>Comentários:</span>
+                <span className={`font-medium ${ultimoPost.isCommentsDisabled ? 'text-red-600' : 'text-green-600'}`}>
+                  {ultimoPost.isCommentsDisabled ? 'Desabilitados' : 'Habilitados'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Hashtags e Menções */}
+        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center space-x-2">
+            <Target className="w-4 h-4" />
+            <span>Tags e Menções</span>
+          </h4>
+          <div className="space-y-3">
+            {ultimoPost.hashtags && Array.isArray(ultimoPost.hashtags) && ultimoPost.hashtags.length > 0 && (
+              <div>
+                <span className="text-xs text-slate-500 block mb-1">Hashtags:</span>
+                <div className="flex flex-wrap gap-1">
+                  {ultimoPost.hashtags.slice(0, 5).map((tag, index) => (
+                    <span key={index} className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
+                      #{tag}
+                    </span>
+                  ))}
+                  {ultimoPost.hashtags.length > 5 && (
+                    <span className="px-2 py-1 bg-slate-200 text-slate-600 rounded text-xs">
+                      +{ultimoPost.hashtags.length - 5} mais
+                    </span>
+                  )}
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-4 text-xs mb-6">
-                <div>
-                  <div className="font-semibold text-gray-700">POSITIVOS</div>
-                  <div className="text-gray-600">
-                    {analisesSentimento.sentimentoLabel === 'POSITIVO' ? 
-                      'Maioria positiva' : 'Alguns positivos'
-                    }
-                  </div>
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-700">NEUTROS</div>
-                  <div className="text-gray-600">
-                    {analisesSentimento.sentimentoLabel === 'NEUTRO' ? 
-                      'Maioria neutra' : 'Alguns neutros'
-                    }
-                  </div>
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-700">NEGATIVOS</div>
-                  <div className="text-gray-600">
-                    {analisesSentimento.sentimentoLabel === 'NEGATIVO' ? 
-                      'Maioria negativa' : 'Alguns negativos'
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">PALAVRAS CHAVES MENCIONADAS</h3>
-                <div className="flex flex-wrap gap-2">
-                  {analisesSentimento.resumoInsights?.palavrasChave?.map((palavra, index) => (
-                    <span key={index} className="bg-orange-400 text-white px-3 py-1 rounded-full text-sm">
-                      {palavra}
+            )}
+            {ultimoPost.mentions && Array.isArray(ultimoPost.mentions) && ultimoPost.mentions.length > 0 && (
+              <div>
+                <span className="text-xs text-slate-500 block mb-1">Menções:</span>
+                <div className="flex flex-wrap gap-1">
+                  {ultimoPost.mentions.slice(0, 3).map((mention, index) => (
+                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                      @{mention}
                     </span>
                   ))}
                 </div>
               </div>
-            </>
-          ) : (
-            <div className="text-center text-gray-500">
-              <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma análise de sentimento disponível</p>
+            )}
+            {(!ultimoPost.hashtags || ultimoPost.hashtags.length === 0) && 
+             (!ultimoPost.mentions || ultimoPost.mentions.length === 0) && (
+              <p className="text-xs text-slate-500 italic">Sem hashtags ou menções identificadas</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Resumo Performance */}
+      <div className="mt-4 p-4 bg-slate-100 rounded-lg border border-slate-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Activity className="w-5 h-5 text-slate-600" />
+            <span className="font-medium text-slate-700">Performance do Post</span>
+          </div>
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center space-x-1">
+              <div className={`w-2 h-2 rounded-full ${
+                ultimoPost.likesCount && candidato.followersCount && 
+                ((ultimoPost.likesCount / candidato.followersCount) * 100) > 2 ? 
+                'bg-green-500' : 'bg-yellow-500'
+              }`}></div>
+              <span className="text-slate-600">
+                {ultimoPost.likesCount && candidato.followersCount && 
+                 ((ultimoPost.likesCount / candidato.followersCount) * 100) > 2 ? 
+                 'Alto engajamento' : 'Engajamento moderado'}
+              </span>
             </div>
-          )}
+            <div className="flex items-center space-x-1">
+              <Clock className="w-3 h-3 text-slate-500" />
+              <span className="text-slate-500">Análise em tempo real</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+      <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Instagram className="w-10 h-10 text-slate-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Nenhum post encontrado
+      </h3>
+      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
+        Este candidato ainda não possui posts coletados ou o perfil do Instagram não foi sincronizado.
+      </p>
+      <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
+        <div className="flex items-center space-x-1">
+          <RefreshCw className="w-3 h-3" />
+          <span>Aguardando coleta automática</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>Verifique o @instagram</span>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
+{/* Análise Sentimento - Full Width */}
+<div className="bg-gray-200 rounded-2xl p-6 mb-8">
+  <h2 className="text-xl font-bold text-gray-900 mb-6">ANÁLISE DE SENTIMENTO</h2>
+  
+  {analisesSentimento ? (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      {/* Header com resumo */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+            <BarChart3 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Análise de Sentimento
+            </h3>
+          </div>
+        </div>
+        
+        {/* Score principal */}
+        <div className="text-center">
+          <div className={`text-4xl font-bold mb-1 ${
+            analisesSentimento.estatisticas.scoreMedio > 0.2 ? 'text-green-600' :
+            analisesSentimento.estatisticas.scoreMedio < -0.2 ? 'text-red-600' :
+            'text-yellow-600'
+          }`}>
+            {analisesSentimento.estatisticas.scoreMedio > 0 ? '+' : ''}
+            {(analisesSentimento.estatisticas.scoreMedio * 100).toFixed(0)}%
+          </div>
+          <div className="text-xs text-gray-500">Score Médio</div>
+        </div>
+      </div>
+
+      {/* Gráfico circular de distribuição */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Visualização circular */}
+        <div className="flex items-center justify-center">
+          <div className="relative w-40 h-40">
+            {/* Círculo base */}
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              {/* Background circle */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#e5e7eb"
+                strokeWidth="8"
+              />
+              
+              {/* Segmento positivo */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="8"
+                strokeDasharray={`${(analisesSentimento.estatisticas.distribuicao.positivo / analisesSentimento.estatisticas.total) * 251.2} 251.2`}
+                strokeDashoffset="0"
+                className="transition-all duration-1000"
+              />
+              
+              {/* Segmento neutro */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="8"
+                strokeDasharray={`${(analisesSentimento.estatisticas.distribuicao.neutro / analisesSentimento.estatisticas.total) * 251.2} 251.2`}
+                strokeDashoffset={`-${(analisesSentimento.estatisticas.distribuicao.positivo / analisesSentimento.estatisticas.total) * 251.2}`}
+                className="transition-all duration-1000"
+              />
+              
+              {/* Segmento negativo */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="8"
+                strokeDasharray={`${(analisesSentimento.estatisticas.distribuicao.negativo / analisesSentimento.estatisticas.total) * 251.2} 251.2`}
+                strokeDashoffset={`-${((analisesSentimento.estatisticas.distribuicao.positivo + analisesSentimento.estatisticas.distribuicao.neutro) / analisesSentimento.estatisticas.total) * 251.2}`}
+                className="transition-all duration-1000"
+              />
+            </svg>
+            
+            {/* Texto central */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {analisesSentimento.estatisticas.total}
+                </div>
+                <div className="text-xs text-gray-500">análises</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Legenda e detalhes */}
+        <div className="space-y-4">
+          <div className="space-y-3">
+            {/* Positivo */}
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                <span className="font-medium text-green-800">Positivos</span>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-green-700">
+                  {analisesSentimento.estatisticas.distribuicao.positivo}
+                </div>
+                <div className="text-xs text-green-600">
+                  {((analisesSentimento.estatisticas.distribuicao.positivo / analisesSentimento.estatisticas.total) * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Neutro */}
+            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                <span className="font-medium text-yellow-800">Neutros</span>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-yellow-700">
+                  {analisesSentimento.estatisticas.distribuicao.neutro}
+                </div>
+                <div className="text-xs text-yellow-600">
+                  {((analisesSentimento.estatisticas.distribuicao.neutro / analisesSentimento.estatisticas.total) * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Negativo */}
+            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                <span className="font-medium text-red-800">Negativos</span>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-red-700">
+                  {analisesSentimento.estatisticas.distribuicao.negativo}
+                </div>
+                <div className="text-xs text-red-600">
+                  {((analisesSentimento.estatisticas.distribuicao.negativo / analisesSentimento.estatisticas.total) * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Confiança média */}
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-slate-700">Confiança Média</span>
+              <span className="text-sm font-bold text-slate-800">
+                {(analisesSentimento.estatisticas.confiancaMedia * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div className="bg-slate-200 rounded-full h-2">
+              <div 
+                className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${analisesSentimento.estatisticas.confiancaMedia * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Palavras-chave */}
+      {analisesSentimento.estatisticas.palavrasChave?.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+            <Target className="w-5 h-5 text-orange-500" />
+            <span>Palavras-chave Mais Mencionadas</span>
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {analisesSentimento.estatisticas.palavrasChave.map((palavra, index) => (
+              <span 
+                key={index} 
+                className="px-3 py-2 bg-orange-100 text-orange-800 rounded-lg text-sm font-medium border border-orange-200 hover:bg-orange-200 transition-colors"
+              >
+                {palavra}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Última análise */}
+      {/* {analisesSentimento.ultimaAnalise && (
+        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-slate-700 flex items-center space-x-2">
+              <Clock className="w-4 h-4" />
+              <span>Última Análise Processada</span>
+            </h4>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              analisesSentimento.ultimaAnalise.sentimentoLabel === 'POSITIVO' ? 'bg-green-100 text-green-700' :
+              analisesSentimento.ultimaAnalise.sentimentoLabel === 'NEGATIVO' ? 'bg-red-100 text-red-700' :
+              'bg-yellow-100 text-yellow-700'
+            }`}>
+              {analisesSentimento.ultimaAnalise.sentimentoLabel}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
+            <div>
+              <span className="font-medium">Score:</span> {(analisesSentimento.ultimaAnalise.sentimentoScore * 100).toFixed(1)}%
+            </div>
+            <div>
+              <span className="font-medium">Confiança:</span> {(analisesSentimento.ultimaAnalise.confianca * 100).toFixed(1)}%
+            </div>
+            <div>
+              <span className="font-medium">Processado:</span> {new Date(analisesSentimento.ultimaAnalise.processadoEm).toLocaleDateString('pt-BR')}
+            </div>
+            {analisesSentimento.ultimaAnalise.totalComentariosAnalisados && (
+              <div>
+                <span className="font-medium">Comentários:</span> {analisesSentimento.ultimaAnalise.totalComentariosAnalisados}
+              </div>
+            )}
+            {analisesSentimento.ultimaAnalise.publicacao?.shortCode && (
+              <div>
+                <span className="font-medium">Post:</span> 
+                <a 
+                  href={`https://instagram.com/p/${analisesSentimento.ultimaAnalise.publicacao.shortCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 hover:text-orange-700 ml-1"
+                >
+                  {analisesSentimento.ultimaAnalise.publicacao.shortCode}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )} */}
+    </div>
+  ) : (
+    <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+      <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <BarChart3 className="w-10 h-10 text-slate-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Nenhuma análise de sentimento disponível
+      </h3>
+      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
+        As análises de sentimento são processadas automaticamente quando há comentários nas publicações.
+      </p>
+      <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
+        <div className="flex items-center space-x-1">
+          <RefreshCw className="w-3 h-3" />
+          <span>Processamento automático</span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>Aguardando comentários</span>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
+        <div className="bg-gray-200 rounded-2xl p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">SIMULADOR DE CENÁRIOS</h2>
+          
+          <div className="bg-white rounded-xl p-6">
+            <SimuladorCenarios 
+              candidatoId={candidato.id}
+              showTitle={false}
+            />
+          </div>
         </div>
 
         {/* Recomendações Estratégicas - Full Width */}
@@ -1022,17 +1578,15 @@ useEffect(() => {
         Nenhum insight estratégico
       </h3>
       <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
-        Recomendações estratégicas para ajudar na campanha do candidato.
+        Crie recomendações estratégicas para ajudar na campanha do candidato.
       </p>
-      {isAdmin() && (
-        <button
+      <button
         onClick={() => setShowCreateInsight(true)}
         className="inline-flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
       >
         <Plus className="w-4 h-4" />
         <span>Criar Primeiro Insight</span>
       </button>
-      )}
     </div>
   )}
 </div>

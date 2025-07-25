@@ -44,7 +44,7 @@ const SemaforoViabilidade = ({ dados }) => {
       {/* Resumo Visual */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {categorias.map((categoria) => {
-          const valor = dados?.distribuicao?.[categoria.key] || 0;
+          const valor = dados?.distribuicao?.[categoria.key.toUpperCase()] || 0;
           const percentual = getPercentual(valor);
 
           return (

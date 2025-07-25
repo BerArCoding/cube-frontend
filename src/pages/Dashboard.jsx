@@ -294,6 +294,21 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {/* Simulador de Cenários - FORA do mapa */}
+              <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
+                <div className="flex items-center space-x-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-[#FF943A]" />
+                  <h3 className="text-lg font-semibold text-slate-700">
+                    Cenários Eleitorais
+                  </h3>
+                </div>
+                <SimuladorCenarios 
+                  filtros={filtrosAtivos}
+                  showTitle={false}
+                />
+              </div>
+
+              {/* Mapa do Paraná */}
               <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="w-5 h-5 bg-[#FF943A] rounded-full"></div>
@@ -302,69 +317,54 @@ const Dashboard = () => {
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-[#FF943A]" />
-                    <h3 className="text-lg font-semibold text-slate-700">
-                      Cenários Eleitorais
-                    </h3>
-                  </div>
-                  <SimuladorCenarios 
-                    filtros={filtrosAtivos}
-                    showTitle={false}
-                  />
-                </div>
-              </div>
-                
-                {/* ✅ LISTA DAS MACRORREGIÕES */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-slate-600 mb-3">Macrorregiões:</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-slate-700">Noroeste</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-slate-700">Norte</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span className="text-slate-700">Centro e Centro-Sul</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-slate-700">Oeste</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="text-slate-700">Vales do Iguaçu</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                      <span className="text-slate-700">Campos Gerais</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-[#FF943A] rounded-full"></div>
-                      <span className="text-slate-700">Grande Curitiba</span>
+                  {/* Lista das Macrorregiões */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium text-slate-600 mb-3">Macrorregiões:</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-slate-700">Noroeste</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-slate-700">Norte</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span className="text-slate-700">Centro e Centro-Sul</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-slate-700">Oeste</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-slate-700">Vales do Iguaçu</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                        <span className="text-slate-700">Campos Gerais</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-[#FF943A] rounded-full"></div>
+                        <span className="text-slate-700">Grande Curitiba</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <img 
-                    src="/mapaParana.png" 
-                    alt="Mapa do Paraná" 
-                    className="max-w-full h-auto rounded-lg shadow-md cursor-pointer"
-                    style={{ maxHeight: '500px' }}
-                    onClick={() => setAbaSelecionada('rss')}
-                    title="Clique para ver notícias"
-                  />
+                  <div className="flex justify-center">
+                    <img 
+                      src="/mapaParana.png" 
+                      alt="Mapa do Paraná" 
+                      className="max-w-full h-auto rounded-lg shadow-md cursor-pointer"
+                      style={{ maxHeight: '500px' }}
+                      onClick={() => setAbaSelecionada('rss')}
+                      title="Clique para ver notícias"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* ✅ TABELA DE CANDIDATOS EMBAIXO */}
+              {/* Tabela de Candidatos */}
               <div className={`${styles.hoverLift}`}>
                 <TabelaCandidatos />
               </div>

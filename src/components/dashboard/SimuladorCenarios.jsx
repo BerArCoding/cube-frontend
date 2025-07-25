@@ -424,7 +424,7 @@ const SimuladorCenarios = ({ candidatoId = null, filtros = null, showTitle = tru
       )}
 
       {/* Rodapé com informações */}
-      <div className="mt-6 pt-4 border-t border-slate-200">
+      {/* <div className="mt-6 pt-4 border-t border-slate-200">
         <div className="flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center space-x-4">
             <span>
@@ -441,7 +441,7 @@ const SimuladorCenarios = ({ candidatoId = null, filtros = null, showTitle = tru
             </span>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

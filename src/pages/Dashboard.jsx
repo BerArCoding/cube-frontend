@@ -294,20 +294,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-                {/* Outros componentes existentes */}
-                <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
-                    <div className="flex items-center space-x-2 mb-4">
-                      <TrendingUp className="w-5 h-5 text-[#FF943A]" />
-                      <h3 className="text-lg font-semibold text-slate-700">
-                        Cenários Eleitorais
-                      </h3>
-                    </div>
-                  <SimuladorCenarios 
-                    filtros={filtrosAtivos}
-                    showTitle={false}
-                  />
-                </div>
-
               <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="w-5 h-5 bg-[#FF943A] rounded-full"></div>
@@ -316,6 +302,20 @@ const Dashboard = () => {
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${styles.hoverLift}`}>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <TrendingUp className="w-5 h-5 text-[#FF943A]" />
+                    <h3 className="text-lg font-semibold text-slate-700">
+                      Cenários Eleitorais
+                    </h3>
+                  </div>
+                  <SimuladorCenarios 
+                    filtros={filtrosAtivos}
+                    showTitle={false}
+                  />
+                </div>
+              </div>
                 
                 {/* ✅ LISTA DAS MACRORREGIÕES */}
                 <div className="mb-6">

@@ -277,11 +277,11 @@ const PostAnalysisCalendar = ({ candidato, ultimoPost }) => {
                                 </>
                               )}
                             </span>
-                            {post.shortCode && (
+                            {/* {post.shortCode && (
                               <span className="px-2 py-1 bg-slate-200 text-slate-600 rounded text-xs font-mono">
                                 {post.shortCode}
                               </span>
-                            )}
+                            )} */}
                           </div>
                           <p className="text-sm text-gray-600">
                             {post.timestamp && (

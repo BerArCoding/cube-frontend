@@ -33,6 +33,7 @@ import {
   Activity,
 } from 'lucide-react';
 import SimuladorCenarios from '../components/dashboard/SimuladorCenarios';
+import PostAnalysisCalendar from '../components/PostAnalysisCalendar.jsx';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -312,7 +313,7 @@ const carregarDadosCandidato = async () => {
 };
 
   // Função para buscar notícias do RSS do candidato
-  const fetchCandidateNews = async (limit = 5) => {
+  const fetchCandidateNews = async (limit = 8) => {
     if (!candidato.urlRss) return;
 
     try {
@@ -478,12 +479,6 @@ const carregarDadosCandidato = async () => {
               <span>Voltar ao Dashboard</span>
             </button>
             
-            <div className="flex space-x-3">
-              <button className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
-                <Download className="w-4 h-4" />
-                <span>Exportar</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -724,323 +719,10 @@ const carregarDadosCandidato = async () => {
   )}
 </div>
 
-{/* Análise Post - Full Width */}
-<div className="bg-gray-200 rounded-2xl p-6 mb-8">
-  <h2 className="text-xl font-bold text-gray-900 mb-6">ANÁLISE DE POSTS</h2>
-  
-  {ultimoPost ? (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      {/* Header do Post */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
-            <Instagram className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Último Post
-              </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                ultimoPost.type === 'Video' ? 'bg-gray-100 text-gray-700' :
-                ultimoPost.type === 'Sidecar' ? 'bg-gray-100 text-gray-700' :
-                'bg-gray-100 text-gray-700'
-              }`}>
-                {ultimoPost.type === 'Video' ? '🎥 Vídeo' :
-                 ultimoPost.type === 'Sidecar' ? '📸 Carrossel' : '🖼️ Imagem'}
-              </span>
-              {ultimoPost.shortCode && (
-                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-mono">
-                  {ultimoPost.shortCode}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600">
-              {ultimoPost.timestamp && (
-                <span className="mr-3">
-                  📅 {new Date(ultimoPost.timestamp).toLocaleDateString('pt-BR')}
-                </span>
-              )}
-              {ultimoPost.locationName && (
-                <span className="mr-3">
-                  📍 {ultimoPost.locationName}
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          {ultimoPost.shortCode && (
-            <a 
-              href={`https://www.instagram.com/p/${ultimoPost.shortCode}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>Ver Post</span>
-            </a>
-          )}
-          {ultimoPost.url && (
-            <a 
-              href={ultimoPost.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
-            >
-              <Instagram className="w-4 h-4" />
-              <span>Perfil</span>
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Legenda do Post */}
-      {ultimoPost.caption && (
-        <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center flex-shrink-0">
-              <FileText className="w-4 h-4 text-slate-600" />
-            </div>
-            <div className="flex-1">
-              <h4 className="text-sm font-semibold text-slate-700 mb-2">Legenda da Publicação</h4>
-              <p className="text-sm text-slate-600 leading-relaxed line-clamp-4">
-                {ultimoPost.caption}
-              </p>
-              {ultimoPost.caption.length > 200 && (
-                <button className="text-xs text-orange-600 hover:text-orange-700 mt-1">
-                  Ver mais...
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Métricas Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Engajamento */}
-        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-semibold text-slate-800">Engajamento</span>
-            </div>
-            <span className="text-2xl font-bold text-orange-600">
-              {ultimoPost.likesCount && candidato.followersCount ? 
-                `${((ultimoPost.likesCount / candidato.followersCount) * 100).toFixed(1)}%` : '0%'}
-            </span>
-          </div>
-          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-orange-500 h-full transition-all duration-500 ease-out"
-              style={{ 
-                width: ultimoPost.likesCount && candidato.followersCount ? 
-                  `${Math.min(((ultimoPost.likesCount / candidato.followersCount) * 100), 100)}%` : '0%'
-              }}
-            ></div>
-          </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
-            <span>{formatNumber(ultimoPost.likesCount || 0)} likes</span>
-            <span>de {formatNumber(candidato.followersCount || 0)} seguidores</span>
-          </div>
-        </div>
-
-        {/* Comentários */}
-        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-semibold text-slate-800">Comentários</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-700">
-              {ultimoPost.commentsCount || 0}
-            </span>
-          </div>
-          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-gray-600 h-full transition-all duration-500 ease-out"
-              style={{ 
-                width: ultimoPost.commentsCount ? 
-                  `${Math.min((ultimoPost.commentsCount / 100) * 100, 100)}%` : '0%'
-              }}
-            ></div>
-          </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
-            <span>Interações ativas</span>
-            <span>{ultimoPost.commentsCount || 0} respostas</span>
-          </div>
-        </div>
-
-        {/* Taxa de Resposta */}
-        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-slate-600 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-semibold text-slate-800">Taxa Resposta</span>
-            </div>
-            <span className="text-2xl font-bold text-slate-700">
-              {ultimoPost.likesCount && ultimoPost.commentsCount ? 
-                `${((ultimoPost.commentsCount / ultimoPost.likesCount) * 100).toFixed(1)}%` : '0%'}
-            </span>
-          </div>
-          <div className="bg-slate-200 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-slate-600 h-full transition-all duration-500 ease-out"
-              style={{ 
-                width: ultimoPost.likesCount && ultimoPost.commentsCount ? 
-                  `${Math.min(((ultimoPost.commentsCount / ultimoPost.likesCount) * 100 * 10), 100)}%` : '0%'
-              }}
-            ></div>
-          </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-slate-600">
-            <span>Comentários/Likes</span>
-            <span>Engajamento ativo</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Detalhes Técnicos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Dados da Publicação */}
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center space-x-2">
-            <FileText className="w-4 h-4" />
-            <span>Dados da Publicação</span>
-          </h4>
-          <div className="space-y-2 text-xs text-slate-600">
-            {ultimoPost.instagramPostId && (
-              <div className="flex justify-between">
-                <span>ID do Post:</span>
-                <span className="font-mono text-slate-800">{ultimoPost.instagramPostId.substring(0, 12)}...</span>
-              </div>
-            )}
-            {ultimoPost.type && (
-              <div className="flex justify-between">
-                <span>Tipo:</span>
-                <span className="font-medium">{ultimoPost.type}</span>
-              </div>
-            )}
-            {ultimoPost.dimensionsWidth && ultimoPost.dimensionsHeight && (
-              <div className="flex justify-between">
-                <span>Dimensões:</span>
-                <span className="font-medium">{ultimoPost.dimensionsWidth}x{ultimoPost.dimensionsHeight}px</span>
-              </div>
-            )}
-            {ultimoPost.isCommentsDisabled !== undefined && (
-              <div className="flex justify-between">
-                <span>Comentários:</span>
-                <span className={`font-medium ${ultimoPost.isCommentsDisabled ? 'text-red-600' : 'text-green-600'}`}>
-                  {ultimoPost.isCommentsDisabled ? 'Desabilitados' : 'Habilitados'}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Hashtags e Menções */}
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center space-x-2">
-            <Target className="w-4 h-4" />
-            <span>Tags e Menções</span>
-          </h4>
-          <div className="space-y-3">
-            {ultimoPost.hashtags && Array.isArray(ultimoPost.hashtags) && ultimoPost.hashtags.length > 0 && (
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Hashtags:</span>
-                <div className="flex flex-wrap gap-1">
-                  {ultimoPost.hashtags.slice(0, 5).map((tag, index) => (
-                    <span key={index} className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
-                      #{tag}
-                    </span>
-                  ))}
-                  {ultimoPost.hashtags.length > 5 && (
-                    <span className="px-2 py-1 bg-slate-200 text-slate-600 rounded text-xs">
-                      +{ultimoPost.hashtags.length - 5} mais
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            {ultimoPost.mentions && Array.isArray(ultimoPost.mentions) && ultimoPost.mentions.length > 0 && (
-              <div>
-                <span className="text-xs text-slate-500 block mb-1">Menções:</span>
-                <div className="flex flex-wrap gap-1">
-                  {ultimoPost.mentions.slice(0, 3).map((mention, index) => (
-                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                      @{mention}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {(!ultimoPost.hashtags || ultimoPost.hashtags.length === 0) && 
-             (!ultimoPost.mentions || ultimoPost.mentions.length === 0) && (
-              <p className="text-xs text-slate-500 italic">Sem hashtags ou menções identificadas</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Resumo Performance */}
-      <div className="mt-4 p-4 bg-slate-100 rounded-lg border border-slate-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Activity className="w-5 h-5 text-slate-600" />
-            <span className="font-medium text-slate-700">Performance do Post</span>
-          </div>
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center space-x-1">
-              <div className={`w-2 h-2 rounded-full ${
-                ultimoPost.likesCount && candidato.followersCount && 
-                ((ultimoPost.likesCount / candidato.followersCount) * 100) > 2 ? 
-                'bg-green-500' : 'bg-yellow-500'
-              }`}></div>
-              <span className="text-slate-600">
-                {ultimoPost.likesCount && candidato.followersCount && 
-                 ((ultimoPost.likesCount / candidato.followersCount) * 100) > 2 ? 
-                 'Alto engajamento' : 'Engajamento moderado'}
-              </span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-3 h-3 text-slate-500" />
-              <span className="text-slate-500">Análise em tempo real</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-      <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Instagram className="w-10 h-10 text-slate-400" />
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Nenhum post encontrado
-      </h3>
-      <p className="text-sm text-gray-500 max-w-sm mx-auto mb-4">
-        Este candidato ainda não possui posts coletados ou o perfil do Instagram não foi sincronizado.
-      </p>
-      <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
-        <div className="flex items-center space-x-1">
-          <RefreshCw className="w-3 h-3" />
-          <span>Aguardando coleta automática</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <AlertCircle className="w-3 h-3" />
-          <span>Verifique o @instagram</span>
-        </div>
-      </div>
-    </div>
-  )}
-</div>
+<PostAnalysisCalendar 
+  candidato={candidato} 
+  ultimoPost={ultimoPost} 
+/>
 
 {/* Análise Sentimento - Full Width */}
 <div className="bg-gray-200 rounded-2xl p-6 mb-8">
@@ -1079,7 +761,7 @@ const carregarDadosCandidato = async () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Visualização circular */}
         <div className="flex items-center justify-center">
-          <div className="relative w-40 h-40">
+          <div className="relative w-64 h-64"> {/* Alterado de w-40 h-40 para w-64 h-64 */}
             {/* Círculo base */}
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               {/* Background circle */}
@@ -1135,10 +817,10 @@ const carregarDadosCandidato = async () => {
             {/* Texto central */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-3xl font-bold text-gray-900">
                   {analisesSentimento.estatisticas.total}
                 </div>
-                <div className="text-xs text-gray-500">análises</div>
+                <div className="text-sm text-gray-500">análises</div>
               </div>
             </div>
           </div>
@@ -1476,7 +1158,7 @@ const carregarDadosCandidato = async () => {
                       Insight
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">{insight.conteudo}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed text-justify">{insight.conteudo}</p>
                 </div>
                 
                 {isAdmin() && (
@@ -1635,6 +1317,8 @@ const carregarDadosCandidato = async () => {
             </div>
           )}
 
+         
+
           {/* Erro */}
           {errorNoticias && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -1737,7 +1421,9 @@ const carregarDadosCandidato = async () => {
                       <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-96 max-w-sm">
                         <div className="bg-gray-900 text-white text-sm rounded-xl p-4 shadow-2xl border border-gray-700">
                           <div className="flex items-start space-x-3">
-                            <Eye className="w-5 h-5 text-orange-400 flex-shrink-0 mt-1" />
+                            <div className="w-5 h-5 text-orange-400 flex-shrink-0 mt-1">
+                              <Eye className="w-5 h-5" />
+                            </div>
                             <div>
                               <p className="font-semibold mb-2 line-clamp-2 text-orange-200">{item.title}</p>
                               <p className="text-gray-300 line-clamp-4 leading-relaxed">{item.summary}</p>

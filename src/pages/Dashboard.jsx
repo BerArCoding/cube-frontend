@@ -136,7 +136,7 @@ const Dashboard = () => {
   if (loading && !dados && !filtrosCarregados) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <Header title="Dashboard" />
+        <Header title="" />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
@@ -151,7 +151,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative">
-      <Header title="Dashboard" />
+      <Header title="" />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header do Dashboard */}
@@ -166,7 +166,7 @@ const Dashboard = () => {
                   style={{ maxHeight: '80px' }}
                 />
                 <h2 className="text-2xl font-bold text-slate-700">
-                  Dashboard de Análise Política
+                  Dashboard Exclusivo de Análise Política
                 </h2>
               </div>
               <p className="text-slate-500">
@@ -188,14 +188,6 @@ const Dashboard = () => {
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 <span>Atualizar</span>
-              </button>
-              
-              <button
-                onClick={exportarRelatorio}
-                className={`flex items-center space-x-2 px-4 py-2 ${styles.gradientOrange} text-white rounded-lg hover:opacity-90 transition-opacity`}
-              >
-                <Download className="w-4 h-4" />
-                <span>Exportar</span>
               </button>
             </div>
           </div>
